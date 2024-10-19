@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="utf-8"?>
+<simulation xmds-version="2">
+  <name>realspace</name>
+  <author>MLS</author>
+  <description>
+    Longitudinally pumped multimode in real space.
+  </description>
+  
+  <!-- #################################################################  -->
+  <!-- FEATURES AND VARIABLES -->
+  
+  <features>
+    <cflags> -lsz </cflags>
+    <!-- Benchmark times the simulation -->	
+    <benchmark />
+    <!-- Test carefully to find the fastest method for doing the FFTs -->
+    <fftw plan="patient" threads="2" />
+    <!--Threaded parallel processing & optimisation -->
+    <openmp threads="2"/>
+    <auto_vectorise />
+    <chunked_output size="100kB" />
+    <globals>
+      <![CDATA[
+	       
+	       ////////////////////////////
+	       // OTHER CONSTANTS
+	       
+	       // LENGTHSCALES (micrometre)
+	       //-- length of cavity (1/2)
+	       double zR=5000;
+	       //-- atomic cloud initial width
+	       //double sigmaA;
+	       //-- pump width
+	       //double sigmaP;
+	       
+	       // UNITLESS/PHASES
+	       //-- mode cutoff
+	       double g;
+	       //-- Guoy phase
+	       double thetaA;
+	       
+	       double gridscale;
+	       double xoffset;
+	       
+	       // CONSTANTS
+	       double pi=3.14159265359;
+
+      ]]>
+    </globals>
+    <!-- Arguments have dependences/can be taken from command line  -->
+    <validation kind="run-time"/>
+    <arguments>
+      <argument name="fP" type="real" default_value="1000.0"/>  
+      <argument name="Delta0" type="real" default_value="10.0"/>
+      <argument name="zA" type="real" default_value="0.0"/>
+      <argument name="sigmaA" type="real" default_value="1.0"/>
+      <argument name="sigmaP" type="real" default_value="1.0"/>
+      <argument name="epsilon" type="real" default_value="0.0"/>
+      <argument name="E0" type="real" default_value="10.0"/>
+      <argument name="modes" type="long" default_value="50"/>
+      <argument name="omegaT" type="real" default_value="1.0"/>
+      <argument name="kappamin" type="real" default_value="1000"/>
+      <argument name="U" type="real" default_value="0.01"/>
+      <argument name="N" type="real" default_value="100000"/>
+      <argument name="eta" type="real" default_value="1"/>
+      <argument name="interaction" type="int" default_value="1" />
+      <argument name="grid" type="int" default_value="64" />
+      <argument name="range" type="real" default_value="12" />
+      <argument name="shortrange" type="int" default_value="1" />
+      <argument name="longrange" type="int" default_value="1" />
+      <argument name="gaussian" type="int" default_value="1" />
+      <argument name="flat" type="int" default_value="0" />
+      <argument name="extpot" type="int" default_value="1" />
+      <argument name="mirror" type="int" default_value="1" />
+      <argument name="balancing" type="int" default_value="0" />
+      <![CDATA[
+	       thetaA=atan(zA/zR)+pi/4;
+	       //sigmaA=2.0;
+	       g=1.0/modes;
+	       gridscale=(range*2)/grid;
+	       //sigmaP=12;
+	       xoffset=0;
+      ]]>
+    </arguments>
+  </features>
+
+  <!-- #################################################################  -->
+  <!-- GEOMETRY DEFN -->
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+    <transverse_dimensions>
+      <dimension name="x" lattice="grid" domain="(-range, range)" aliases="xp" />
+      <dimension name="y" lattice="grid" domain="(-range, range)" aliases="yp" />    
+    </transverse_dimensions>
+  </geometry>
+
+  <!-- #################################################################  -->
+  <!-- VECTORS -->
+
+  <!-- ATOMIC FIELD -->
+  <vector name="atomicfield" type="complex">
+    <components> psi </components>
+    <initialisation>
+      <![CDATA[
+	       // psi gaussian, normalised
+	       psi=( (1/(sqrt(2*pi)*sigmaA)) *
+	       exp( (-(x-xoffset)*(x-xoffset)-y*y) / (4*sigmaA*sigmaA))
+	       );	       
+      ]]>
+    </initialisation>
+  </vector>
+
+  <!-- LIGHT FIELD -->
+  <vector name="lightfield" dimensions="x y" type="complex">
+    <components> alpha </components>
+    <initialisation>
+      <![CDATA[
+	       alpha=0;
+      ]]>
+    </initialisation>
+  </vector>
+  
+  
+  <!-- ATOMIC POTENTIAL ENERGY -->
+  <vector name="harmonicpotential" type="real">
+    <components>Vho</components>
+    <initialisation>
+      <![CDATA[
+	       Vho=extpot*omegaT*((x-xoffset)*(x-xoffset)+y*y)/(2*eta*eta);
+      ]]>
+    </initialisation>
+  </vector>
+
+  <!-- LIGHT POTENTIAL ENERGY -->
+   <vector name="lightpotential" type="real">
+    <components>Vl</components>
+    <initialisation>
+      <![CDATA[
+               Vl = epsilon*( y*y + x*x )/2;
+      ]]>
+    </initialisation>
+   </vector>
+
+   <!-- GAUSSIAN PUMP TERM -->
+   <vector name="pumpterm" type="complex" dimensions="x y">
+     <components>pump</components>
+     <initialisation>
+       <![CDATA[
+		pump=fP*exp(-(x*x+y*y)/(2*sigmaP*sigmaP));
+       ]]>
+     </initialisation>
+   </vector>
+   
+   <!-- %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% -->
+    <!-- INTEGRAL KERNELS -->
+   <vector name="Kx" dimensions="x xp" type="complex">
+     <components>Kxplus Kxminus</components>
+     <initialisation>
+       <![CDATA[
+		complex a=thetaA-i*g;
+		Kxplus= interaction*sqrt(exp(i*a)/(2*i*pi*sin(a))) *
+		exp( (i/(2*tan(a)) )*(x*x+xp*xp) ) *
+		exp ( -i*(x*xp)/sin(a) );
+		
+		complex b=-thetaA -i*g;
+		Kxminus= interaction*sqrt(exp(i*b)/(2*i*pi*sin(b))) *
+                exp( (i/(2*tan(b)) )*(x*x+xp*xp) ) *
+                exp ( -i*(x*xp)/sin(b) ) ;
+       ]]>
+     </initialisation>
+   </vector>
+
+   <vector name="Ky" dimensions="y yp" type="complex">
+     <components>Kyplus Kyminus</components>
+     <initialisation>
+       <![CDATA[
+		complex a=thetaA-i*g;
+		Kyplus= interaction*sqrt(exp(i*a)/(2*i*pi*sin(a))) *
+		exp( (i/(2*tan(a)) )*(y*y+yp*yp) ) *
+		exp ( -i*(y*yp)/sin(a) );
+		
+		complex b=-thetaA -i*g;
+		Kyminus= interaction*sqrt(exp(i*b)/(2*i*pi*sin(b))) *
+                exp( (i/(2*tan(b)))*(y*y+yp*yp) ) *
+                exp ( -i*(y*yp)/sin(b) ) ;
+       ]]>
+     </initialisation>
+   </vector>
+   
+   <vector name="D" dimensions="x xp y yp" type="complex">
+     <components>Dplus Dminus</components>
+     <initialisation>
+       <dependencies>Kx Ky</dependencies>
+       <![CDATA[	
+		Dplus=0.5*(Kxplus*Kyplus+Kxplus(xp=>-xp)*Kyplus(yp=>-yp));
+		
+		Dminus=0.5*(Kyminus*Kyminus+Kxminus(xp=>-xp)*Kyminus(yp=>-yp));
+
+       ]]>
+     </initialisation>
+   </vector>
+
+   <!-- EFFECTIVE POTENTIAL -->
+   <!--vector name="pumpint" dimensions="x y" type="complex"-->
+     <!--components>F</components-->
+     <!--initialisation>
+       <dependencies>pumpterm D</dependencies>
+       <![CDATA[	
+		F=gridscale*pump(x=>xp,y=>yp)*Dplus;
+       ]]-->
+     <!--/initialisation>
+   </vector-->
+   
+   <!--vector name="effectivepot" dimensions="x y" type="complex">
+     <components>Veff</components>
+     <initialisation>
+       <dependencies>pumpint harmonicpotential</dependencies>
+       <![CDATA[	
+		Veff=Vho+balancing*((E0)/(2*Delta0*Delta0+2*kappamin*kappamin))*mod2(F);
+       ]]>
+     </initialisation-->
+   <!--/vector-->
+   
+   <!-- ATOMIC FIELD EQN INTERACTION INTEGRALS:-->
+   <computed_vector dimensions="x y xp" name="atomicEqIntegralsTemp" type="complex">
+     <components>DplusAlphaTemp DminusAlphaTemp</components>
+     <evaluation>
+       <dependencies>D lightfield</dependencies>
+       <![CDATA[
+		DplusAlphaTemp=gridscale*alpha(x=>xp,y=>yp)*Dplus;
+		DminusAlphaTemp=gridscale*alpha(x=>xp,y=>yp)*Dminus;
+       ]]>
+     </evaluation>
+   </computed_vector>
+
+   <computed_vector dimensions="x y" name="atomicEqIntegrals" type="complex">
+     <components>DplusAlpha DminusAlpha</components>
+     <evaluation>
+       <dependencies>atomicEqIntegralsTemp</dependencies>
+       <![CDATA[
+                DplusAlpha=gridscale*DplusAlphaTemp;
+                DminusAlpha=gridscale*DminusAlphaTemp;
+       ]]>
+     </evaluation>
+   </computed_vector>
+   
+   <!-- LIGHT FIELD EQN INTERACTION INTEGRALS:-->
+   <computed_vector dimensions="x y xp" name="lightEqIntegralsTemp" type="complex">
+     <components>lightIntTemp</components>
+     <evaluation>
+       <dependencies>atomicfield atomicEqIntegrals D</dependencies>
+       <![CDATA[
+		complex lightPlusMinusTemp=gridscale*DplusAlpha(x=>xp,y=>yp)* Dminus
+		        *mod2(psi(x=>xp,y=>yp));
+		complex lightMinusPlusTemp=gridscale*DminusAlpha(x=>xp,y=>yp)* Dplus
+		        *mod2(psi(x=>xp,y=>yp));
+		lightIntTemp=lightPlusMinusTemp+lightMinusPlusTemp;
+	]]>
+     </evaluation>
+   </computed_vector>
+
+   <computed_vector dimensions="x y" name="lightEqIntegrals" type="complex">
+     <components>lightInt</components>
+     <evaluation>
+       <dependencies>lightEqIntegralsTemp</dependencies>
+        <![CDATA[
+                 lightInt=gridscale*lightIntTemp;
+	]]>
+     </evaluation>
+   </computed_vector>
+
+   <!-- #################################################################  -->
+   <!-- INTEGRATION ROUTINE -->
+   
+   <sequence>
+     <integrate algorithm="ARK45" interval="20" tolerance="1e-9">
+       <samples>10000 10000</samples>
+       <operators>
+	 <integration_vectors> atomicfield lightfield</integration_vectors>
+         <operator kind="ex">
+           <operator_names>Ta Tl</operator_names>
+           <![CDATA[
+		    Ta=(omegaT/2)*eta*eta*(kx*kx+ky*ky);
+		    Tl=(epsilon/2)*(kx*kx+ky*ky);
+           ]]>
+         </operator>
+	 <![CDATA[
+		  dpsi_dt= -i*( Ta[psi] + Vho*psi + U*N*mod2(psi)*psi
+		  - interaction*(E0/4)*( mod2(DplusAlpha) + mod2(DminusAlpha) ) *psi);
+		  
+		  dalpha_dt=-i*( Tl[alpha] + Vl*alpha - (Delta0 + i*kappamin)*alpha + pump -interaction*(E0/4)*N*lightInt);
+	 ]]>
+	 <dependencies>harmonicpotential lightpotential pumpterm lightEqIntegrals atomicEqIntegrals </dependencies>
+       </operators>
+     </integrate>
+   </sequence>
+   
+   <!-- #################################################################  -->
+   <!-- OUTPUT -->
+   
+   <output filename="output.xsil">
+     <sampling_group basis="x y" initial_sample="yes">
+       <moments>imatom reatom imlight relight modatom modlight relightint imlightint</moments>
+       <dependencies>atomicfield lightfield lightEqIntegrals </dependencies>
+       <![CDATA[
+		reatom=psi.Re();
+		imatom=psi.Im();
+		modatom=mod2(psi);
+		relight=alpha.Re();
+		imlight=alpha.Im();
+		modlight=mod2(alpha);
+		relightint=lightInt.Re();
+		imlightint=lightInt.Im();
+       ]]>
+     </sampling_group>
+     <sampling_group basis="x xp" initial_sample="yes">
+       <moments>imkxplus rekxplus imkxminus rekxminus modkxplus modkxminus</moments>
+       <dependencies>Kx</dependencies>
+       <![CDATA[
+		rekxplus=Kxplus.Re();
+		imkxplus=Kxplus.Im();
+		modkxplus=mod2(Kxplus);
+		rekxminus=Kxminus.Re();
+		imkxminus=Kxminus.Im();
+		modkxminus=mod2(Kxminus);
+       ]]>
+     </sampling_group>
+   </output>
+   
+ </simulation>

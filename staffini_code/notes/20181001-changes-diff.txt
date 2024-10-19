@@ -1,0 +1,83 @@
+diff --git a/weak-coupling-realspace.xmds b/weak-coupling-realspace.xmds
+index 27b193f..e9611c3 100644
+--- a/weak-coupling-realspace.xmds
++++ b/weak-coupling-realspace.xmds
+@@ -104,9 +104,10 @@
+      <components>Fthetaplus Fthetaminus</components>
+      <initialisation>
+        <![CDATA[
+-		Fthetaplus=2*fP/exp(thetaA-i*r*r*tan(thetaA)/2);
++		// With a wide pump spot:
++		Fthetaplus=(2*fP/cos(thetaA))*exp(thetaA-i*(r*r/2)*tan(thetaA));
+ 
+-		Fthetaminus=2*fP/exp(-thetaA-i*r*r*tan(-thetaA)/2);
++		Fthetaminus=(2*fP/cos(-thetaA))*exp(-thetaA-i*(r*r/2)*tan(-thetaA));
+        ]]>
+      </initialisation>
+    </vector>
+@@ -116,13 +117,15 @@
+      <components>D2thetaplus D2thetaminus</components>
+      <initialisation>
+        <![CDATA[
+-		D2thetaplus=interaction*(2*exp(2*thetaA))/(i*sin(2*thetaA)) *
+-		exp( (i/2)*( (r*r+rp*rp)/tan(2*thetaA) ) ) *
+-		j0(r*rp/sin(2*thetaA));
+-
+-		D2thetaminus=interaction*(2*exp(-2*thetaA))/(i*sin(-2*thetaA)) *
+-		exp( (i/2)*( (r*r+rp*rp)/tan(-2*thetaA) ) ) *
+-		j0(r*rp/sin(-2*thetaA));
++		double a=2*thetaA;
++		D2thetaplus=interaction*(2*exp(a))/(i*sin(a)) *
++		exp( ( i/(2*tan(a)) )*(r*r+rp*rp) ) *
++		j0(r*rp/sin(a));
++		
++		double b=-2*thetaA;
++		D2thetaminus=interaction*(2*exp(b))/(i*sin(b)) *
++		exp( ( i/(2*tan(b)) )*(r*r+rp*rp) ) *
++		j0(r*rp/sin(b));
+ 
+        ]]>
+      </initialisation>
+@@ -134,10 +137,14 @@
+      <initialisation>
+      <dependencies>D2theta Ftheta</dependencies>
+        <![CDATA[
+-		Urrp=((2*E0*E0*N*Delta0)/
+-		(4*(Delta0*Delta0+kappamin*kappamin)*(Delta0*Delta0+kappamin*kappamin)))*(
++		double prefact=(2*E0*E0*N*Delta0)/(4*(Delta0*Delta0*+kappamin*kappamin)
++		*(Delta0*Delta0*+kappamin*kappamin));
++
++		Urrp=
++		interaction*prefact*(
+ 		Fthetaminus*Fthetaminus(r=>rp)*D2thetaplus+
+-		Fthetaplus*Fthetaplus(r=>rp)*D2thetaminus);	
++		Fthetaplus*Fthetaplus(r=>rp)*D2thetaminus
++		);	
+        ]]>
+      </initialisation>
+    </vector>
+@@ -158,10 +165,11 @@
+      <initialisation>
+      <dependencies>atomicfield Ftheta</dependencies>
+        <![CDATA[
+-		Uirr=
+-		((E0*E0*N*Delta0)/((Delta0*Delta0+kappamin*kappamin)*
+-		(Delta0*Delta0+kappamin*kappamin)))*
+-		(Fthetaminus*Fthetaplus+Fthetaplus*Fthetaminus)*mod2(psi);	
++		double prefact=(2*E0*E0*N*Delta0)/(4*(Delta0*Delta0*+kappamin*kappamin)
++		*(Delta0*Delta0*+kappamin*kappamin));
++	
++		Uirr=interaction*prefact*2*
++		(Fthetaminus*Fthetaplus)*mod2(psi);	
+        ]]>
+      </initialisation>
+    </vector>
+@@ -182,7 +190,7 @@
+            ]]>
+          </operator>
+ 	 <![CDATA[
+-		  dpsi_dt= -i*( Ta[psi]+Vext*psi - interaction*(Ureg+Uirr)*psi);
++		  dpsi_dt= -i*( Ta[psi]+Vext*psi + interaction*(Ureg+Uirr)*psi);
+ 	 ]]>
+ 	 <dependencies>regularpart irregularpart externalpot</dependencies>
+        </operators>

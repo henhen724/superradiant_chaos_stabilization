@@ -22,8 +22,8 @@ end
 
 using DifferentialEquations
 
-momentum_cutoff_long = 21
-momentum_cutoff_trans = 21
+momentum_cutoff_long = 3
+momentum_cutoff_trans = 3
 @assert momentum_cutoff_long % 2 == 1 & momentum_cutoff_trans % 2 == 1
 vec_dim = 1 + momentum_cutoff_long * momentum_cutoff_trans
 u0 = zeros(ComplexF64, vec_dim)
@@ -39,10 +39,10 @@ E_0 = 40.0 #MHz
 ω_r = 0.05 #MHz
 
 
-ω_c = 80.0 #MHz
-P = 1.0 #MHz
+ω_c = 1.170 * E_0 #MHz extremely close detunned
+P = 0.0#0.617 #MHz 
 
-
+u0[1] = 1.0 # Start cavity field with symetry broken
 
 function sde_drift(du, u, p, t)
     long_sum_all = 0
@@ -67,15 +67,15 @@ function sde_drift(du, u, p, t)
 end
 
 function sde_diffusion(du, u, p, t)
-    du[1, 1] = sqrt(κ / 4)
-    du[1, 2] = im * sqrt(κ / 4) # comment out for homodyne
+    # du[1, 1] = sqrt(κ / 4)
+    # du[1, 2] = im * sqrt(κ / 4) # comment out for homodyne
 end
 
 
-tspan = (0.0, 1.0)
+tspan = (0.0, 50.0)
 
 prob = SDEProblem(sde_drift, sde_diffusion, u0, tspan, noise_rate_prototype=noise_prototype, noise=noise)
-sol = solve(prob, RKMilGeneral(; ii_approx=IICommutative()))
+sol = solve(prob, RKMilGeneral(; ii_approx=IICommutative()); adaptive=false, dt=2^(-15))
 
 using Plots
 plot(sol.t, map(x -> real(x[1]), sol.u))

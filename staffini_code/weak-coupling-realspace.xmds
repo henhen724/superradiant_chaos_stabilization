@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simulation xmds-version="2">
+  <name>weak-coupling-realspace</name>
+  <author>MLS</author>
+  <description>
+    Longitudinally pumped multimode in real space for weak coupling strength.
+  </description>
+  
+  <!-- #################################################################  -->
+  <!-- FEATURES AND VARIABLES -->
+  
+  <features>
+    <cflags> -lsz </cflags>
+    <!-- Benchmark times the simulation -->	
+    <benchmark />
+    <!-- Test carefully to find the fastest method for doing the FFTs -->
+    <fftw plan="patient" />
+    <!--Threaded parallel processing & optimisation -->
+    <openmp threads="2"/>
+    <auto_vectorise />
+    <chunked_output size="100kB" />
+    <globals>
+      <![CDATA[	       
+	       ////////////////////////////
+	       // OTHER CONSTANTS
+	       
+	       // LENGTHSCALES (micrometre)
+	       //-- length of cavity (1/2)
+	       double zR=5000;
+	       //-- atomic cloud initial width
+	       //double sigmaA;
+	       
+	       // UNITLESS/PHASES
+	       //-- mode cutoff
+	       double g;
+	       //-- Guoy phase
+	       double thetaA;
+	       
+	       // FREQUENCIES (kHz)
+	       // omegaT for which eta=1:
+	       
+	       // Prefactors of interaction
+	       double U0;
+
+	       double gridscale;
+
+	       // CONSTANTS
+	       double pi=3.14159265359;
+
+      ]]>
+    </globals>
+    <validation kind="run-time"/>
+    <!-- Arguments have dependences/can be taken from command line  -->
+    <arguments>
+      <argument name="fP" type="real" default_value="1000.0"/>  
+      <argument name="Delta0" type="real" default_value="10.0"/>
+      <argument name="zA" type="real" default_value="0.0"/>    
+      <argument name="sigmaA" type="real" default_value="1.0"/>
+      <argument name="sigmaP" type="real" default_value="1.0"/>    
+      <argument name="epsilon" type="real" default_value="0.0"/>
+      <argument name="E0" type="real" default_value="10.0"/>
+      <argument name="modes" type="long" default_value="50"/>
+      <argument name="omegaT" type="real" default_value="1.0"/>
+      <argument name="kappamin" type="real" default_value="1000"/>
+      <argument name="U" type="real" default_value="0.01"/>
+      <argument name="N" type="real" default_value="100000"/>
+      <argument name="eta" type="real" default_value="1"/>
+      <argument name="interaction" type="int" default_value="1" />
+      <argument name="grid" type="int" default_value="64" />
+      <argument name="range" type="real" default_value="12" />
+      <argument name="shortrange" type="int" default_value="1" />
+      <argument name="longrange" type="int" default_value="1" />
+      <argument name="gaussian" type="int" default_value="1" />
+      <argument name="flat" type="int" default_value="0" />
+      <argument name="extpot" type="int" default_value="1" />
+      <argument name="mirror" type="int" default_value="1" />      
+      <argument name="balancing" type="int" default_value="0" />      
+      <![CDATA[
+	       thetaA=atan(zA/zR)+pi/4;
+	       //sigmaA=4;
+	       g=1/modes;
+	       gridscale=range*2/grid;
+	       U0=(E0*E0*N*Delta0)/(4*(Delta0*Delta0+kappamin*kappamin)*
+	       (Delta0*Delta0+kappamin*kappamin));
+      ]]>
+    </arguments>
+  </features>
+
+  <!-- #################################################################  -->
+  <!-- GEOMETRY DEFN -->
+  
+  <geometry>
+    <propagation_dimension> t </propagation_dimension>
+    <transverse_dimensions>
+      <dimension name="x" lattice="grid" domain="(-range, range)" aliases="xp" />    
+    </transverse_dimensions>
+  </geometry>
+
+  <!-- #################################################################  -->
+  <!-- VECTORS -->
+
+  <!-- FIELD PSI -->
+  <vector name="atomicfield" type="complex">
+    <components> psi </components>
+    <initialisation>
+      <![CDATA[
+	       int xoffset=0;
+	       // (1/(sqrt(2*pi)*sigmaA)) 
+	       // psi gaussian, normalised
+	       psi=gaussian* exp( (-(x-xoffset)*(x-xoffset))/
+	       (4*sigmaA*sigmaA) ) + flat*1+ flat*0.05*cos(0.69*x);
+      ]]>
+    </initialisation>
+  </vector>
+
+  <!-- V_EXT TERM -->
+  <vector name="externalpot" type="real">
+    <components>Vext</components>
+    <initialisation>
+      <![CDATA[
+	       //Vext = 0;
+	       double poffset=0;
+	       Vext=extpot*omegaT*((x-poffset)*(x-poffset))/(2*eta*eta);
+      ]]>
+    </initialisation>
+  </vector>
+
+  <!-- F(r,+-thetaA) -->
+    <vector name="Ftheta" dimensions="x" type="complex">
+     <components>Fthetaplus Fthetaminus</components>
+     <initialisation>
+       <![CDATA[
+		// With a wide pump spot:
+		// here mirror image turning off is just getting rid of factor 2:
+		double foffset=0;
+		Fthetaplus=(mirror+1)*(fP/cos(thetaA))*exp(i*thetaA-i*((x-foffset)*(x-foffset)/2)*tan(thetaA));
+
+		Fthetaminus=(mirror+1)*(fP/cos(-thetaA))*exp(-i*thetaA-i*((x-foffset)*(x-foffset)/2)*tan(-thetaA));
+       ]]>
+     </initialisation>
+   </vector>
+
+   <vector name="effectivepot" dimensions="x" type="complex">
+     <components>Veff</components>
+     <initialisation>
+       <dependencies>externalpot Ftheta</dependencies>
+       <![CDATA[
+		// In wkcpl we need to add VP by hand, and want Vext-VP when bal off	
+                Veff=Vext+(balancing-1)*((E0/(2*(Delta0*Delta0+kappamin*kappamin)))*Fthetaplus*Fthetaminus);
+       ]]>
+     </initialisation>
+   </vector>
+   
+  <!-- D(r,r',+-2 thetaA) KERNEL -->
+  <vector name="D2theta" dimensions="x xp" type="complex">
+     <components>D2thetaplus D2thetaminus</components>
+     <initialisation>
+       <![CDATA[
+		double a=2*thetaA;
+		D2thetaplus=interaction*(exp(i*a)/(2*(1+mirror)*pi*i*sin(a))) *
+		exp( (i/(2*tan(a)))*(x*x+xp*xp) )
+		*(
+		exp( -(i/sin(a))*(x*xp) )+mirror*exp((i/sin(a))*(x*xp))
+		);
+		
+		double b=-2*thetaA;
+		D2thetaminus=interaction*(exp(i*b)/(2*(1+mirror)*pi*i*sin(b))) *
+		exp( ( i/(2*tan(b)) )*(x*x+xp*xp) ) *(
+		exp( -(i/sin(b))*(x*xp) )+mirror*exp((i/sin(b))*(x*xp))
+		);
+
+       ]]>
+     </initialisation>
+   </vector>
+          
+  <!-- INTERACTION INTEGRAL - REGULAR PART:  -->
+   <vector name="regularpartint" dimensions="x xp" type="complex">
+     <components>Urrp</components>
+     <initialisation>
+     <dependencies>D2theta Ftheta</dependencies>
+       <![CDATA[
+		Urrp=interaction*U0*(Fthetaminus*Fthetaminus(x=>xp)*D2thetaplus+
+		Fthetaplus*Fthetaplus(x=>xp)*D2thetaminus);	
+       ]]>
+     </initialisation>
+   </vector>
+
+   <computed_vector name="regularpart" type="complex" dimensions="x">
+      <components>Ureg</components>
+      <evaluation>
+      <dependencies>regularpartint atomicfield</dependencies>
+         <![CDATA[
+		  Ureg=gridscale*Urrp*mod2(psi(x=>xp));
+	]]>
+    </evaluation>
+   </computed_vector>
+
+    <!-- INTERACTION INTEGRAL - IRREGULAR PART:  -->
+   <vector name="irregularpart" dimensions="x" type="complex">
+     <components>Uirr</components>
+     <initialisation>
+     <dependencies>atomicfield Ftheta</dependencies>
+     <![CDATA[
+	      double prefact=interaction*U0*(fP/cos(thetaA))*(fP/cos(thetaA));
+	      
+	      Uirr=prefact*(mod2(psi)+mirror*mod2(psi(x=>-x)));
+     ]]>
+     </initialisation>
+   </vector>
+
+    
+   <!-- #################################################################  -->
+   <!-- INTEGRATION ROUTINE -->
+   
+   <sequence>
+     <integrate algorithm="ARK45" interval="20" tolerance="1e-9">
+       <samples>1000</samples>
+       <operators>
+	 <integration_vectors>atomicfield</integration_vectors>
+         <operator kind="ex">
+           <operator_names>Ta</operator_names>
+           <![CDATA[
+		    Ta=(omegaT/2)*eta*eta*(kx*kx);
+           ]]>
+         </operator>
+	 <![CDATA[
+		  dpsi_dt= -i*( Ta[psi]+Veff*psi + interaction*
+		  (longrange*Ureg+shortrange*Uirr)*psi);
+	 ]]>
+	 <dependencies>regularpart irregularpart effectivepot</dependencies>
+       </operators>
+     </integrate>
+   </sequence>
+   
+   <!-- #################################################################  -->
+   <!-- OUTPUT -->
+   
+   <output filename="output.xsil">
+     <sampling_group basis="x" initial_sample="yes">
+       <moments>imatom reatom modatom</moments>
+       <dependencies>atomicfield</dependencies>
+       <![CDATA[
+		reatom=psi.Re();
+		imatom=psi.Im();
+		modatom=mod2(psi);
+       ]]>
+     </sampling_group>
+   </output>
+ 
+ </simulation>

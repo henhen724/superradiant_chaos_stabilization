@@ -1,0 +1,41 @@
+########################
+# RESULTS FOLDERS/FILES
+
+results/*
+fP=*_Delta0=*/*
+1D_fP*/*
+TESTING-SHO-ONLY-*fP=*_Delta0=*/*
+previous-versions/modebasis/results/*
+WEAK-CPL_*fP*_Delta0=*
+res*/*
+*png
+
+########################
+# LaTeX GENERATED FILES
+
+*.dvi
+*.aux
+*.out
+*.log
+*.gz
+*.blg
+*.bbl
+*.bib
+
+########################
+# COMPILED XMDS FILES
+
+*.cc
+realspace
+1Drealspace
+weak-coupling-realspace
+
+########################
+# RANDOM CODE FOR LOCAL USE
+
+many.sh
+FT-STUFF-*
+temp.nb
+previous-versions/*
+.DS_Store
+bessel_cosine_groundstate.xmds

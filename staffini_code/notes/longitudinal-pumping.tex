@@ -1,0 +1,1599 @@
+\documentclass[twocolumn]{revtex4-1}
+\usepackage{amsmath}
+\renewcommand{\vec}[1]{\mathbf{#1}}
+
+\usepackage{color,soul}
+
+\newcommand{\tvr}{\tilde{\vec{r}}}
+\newcommand{\tvrp}{\tilde{\vec{r}}^\prime}
+\newcommand{\lho}{\ell}
+
+\begin{document}
+\title{Some notes on longitudinally pumped cavities}
+\maketitle
+
+\section{Equations of motion}
+\label{sec:equations-motion}
+
+We consider a longitudinally pumped cavity containing a BEC.  We
+assume the BEC is confined in the $z$ direction, having a form
+$\Psi(x,y,z) =\psi(x,y) Z(z)$.  We consider the dynamics of the
+in-plane motion, which obeys an equation of motion:
+\begin{multline}
+  \label{eq:1}
+  i \hbar \partial_t \psi(r) =
+  - \frac{\hbar^2 \nabla^2}{2m} \psi(r)
+  + V_{\text{ext}}(\vec{r}) \psi(r)
+  \\- E_0
+  \int dz |Z(z)|^2 |\varphi(\vec{r},z)|^2  \psi(r).
+\end{multline}
+Here $V_{\text{ext}}(r)$ is an extenral trapping potential, $E_0$ is the
+light shift and the light field $\varphi(\vec{r},z)$ will be written
+as:
+\begin{equation}
+\label{eq:2}
+  \varphi(\vec{r}, z) =
+  \sum_{m,n,q} \alpha_{m,n,q} u_{m,n,q}(\vec{r},z)
+\end{equation}
+where $m,n$ label transverse mode structure, and $q$ labels
+longitudinal structure.  When we consider the nearly confocal cavity
+with high Finesse, we will be able to restrict the summation such that
+$2q + m+n=2q_0$, so that $m,n$ must have the same parity, and $q$ is
+determined given $m,n$.  Note that since the mode profiles
+$u_{m,n,q}(\vec{r},z)$ will have dimensions of $[L]^{-1}$ (one over
+square root of area).  The coefficients $\alpha$ are
+dimensionsionless, and so $\varphi(\vec{r},z)$ also has dimensions of
+$[L]^{-1}$. As such, the quantity denoted $E_0$ has dimensions of
+energy times area.
+\begin{widetext}
+The light field obeys:
+\begin{multline}
+  i \partial_t \alpha_{m,n,q}
+  = (\omega_{m,n,q} - \omega_\text{Pump} -i \kappa) \alpha_{m,n,q} 
+  +
+  f_{m,n,q} \\
+  - E_0 \sum_{m^\prime, n^\prime, q^\prime}
+  \iint d^2r  dz |Z(z)|^2 |\psi(\vec{r})|^2
+  u^\ast_{m,n,q}(\vec{r},z)
+  u^{}_{m^\prime,n^\prime,q^\prime}(\vec{r},z) \alpha_{m^\prime, n^\prime, q^\prime},
+\end{multline}
+\end{widetext}
+where the pump term should be considered as:
+\begin{displaymath}
+  f_{m,n,q} = \int d^2\vec{r} f(\vec{r}) u^\ast_{m,n,q}(\vec{r}, - z_R),
+\end{displaymath}
+i.e. it is the overlap with the pump profile at the ends of the
+cavity.  Both $f(r)$ and $f_{m,n,q}$ have dimensions of energy (as we
+are taking $\hbar=1$).
+
+
+\subsection{Basis functions}
+\label{sec:basis-functions}
+
+In solving the above, we may choose to work either with Gauss-Hermite
+or Gauss-Laguerre modes.  For numerics, Laguerre is preferable as
+it allows us to consider the radially symmetric case efficiently.  For
+analytics, I know more things about Hermite functions.
+
+In the Hermite case we will consider:
+\begin{multline}
+  u_{m,n,q}(x,y,z) = 
+  \frac{1}{w(z)}
+  \chi_n\left( \frac{\sqrt{2} x}{w(z)} \right)
+  \chi_m\left( \frac{\sqrt{2} y}{w(z)} \right)
+  \\
+  \cos \left[
+    k \left( z + \frac{r^2}{2R(z)} \right) - (m+n+1) \psi(z) + \xi_{q} \right],
+\end{multline}
+where the beam waist $w(z)$, radius of curvature $R(z)$ and Guoy phase
+$\psi(z)$ are discussed in appendix~\ref{sec:gaussian-optics-crib}.  The
+functions $\chi_n(x)$ are normalised Gauss-Hermite functions, i.e.
+\begin{displaymath}
+  \chi_n(x) = \sqrt[4]{\frac{2}{\pi}}
+  \frac{1}{\sqrt{2^n n!}} H_n(x) \exp\left(-\frac{x^2}{2} \right).
+\end{displaymath}
+
+In the Laguerre case we instead have:
+\begin{multline}
+  u_{m,n,q}(x,y,z) = 
+  \frac{1}{w(z)}
+  \chi^L_{n,m}\left( \sqrt{2}\frac{r}{w(z)} \right)
+  \frac{e^{i m \theta}}{\sqrt{1+\delta_{m,0}}}
+  \\
+  \cos \left[
+    k \left( z + \frac{r^2}{2R(z)} \right) - (2n+m+1) \psi(z) + \xi_{q} \right],
+\end{multline}
+where $n$ now labels radial associated Laguerre functions, i.e.
+\begin{displaymath}
+  \chi^L_{n,m}(x) = 
+  \sqrt{ \frac{2 n!}{\pi (m+n)!}}
+  x^m L_n^m(x^2) \exp(-x^2/2).
+\end{displaymath}
+
+Since the pump picks out a mode, we will from now on suppress the
+label $q$ and use $q = q_0 - (m+n)/2$ as discussed in the appendix.
+This means all sums over $m,n$ are restricted to a fixed parity.
+
+\subsection{z overlaps}
+\label{sec:z-overlaps}
+
+We will require in many places to calculate the quantity:
+\begin{displaymath}
+  O_{m,n, m^\prime, n^\prime}(r, r^\prime)=
+  \int  dz |Z(z)|^2 
+  u^\ast_{m,n}(\vec{r},z)
+  u^{}_{m^\prime,n^\prime}(\vec{r},z).
+\end{displaymath}
+The $z$ dependence all appears in the cosine terms.   We use the calculation
+discussed in the appendix to write:
+\begin{multline}
+  k \left( z + \frac{r^2}{2R(z)} \right) - (m+n+1) \psi(z) + \xi_{q}
+  \\\equiv
+  f_0(\vec{r},z) - \theta(z) (m+n)
+\end{multline}
+where $\theta(z) = \pi/4 + \psi(z)$ and $f_0$ includes all other
+($m,n$ indepdnenent) parts.  We consider a Gaussian
+cloud 
+\begin{displaymath}
+  |Z(z)|^2 = \frac{1}{\sqrt{2\pi \sigma_z^2}}
+  \exp\left( - \frac{(z-z_0)^2}{2 \sigma_z^2} \right)
+\end{displaymath}
+There are two limits that we can hope to consider analytically,
+$z_R \gg \sigma_z \gg \lambda$ and $\lambda \gg \sigma_z$.
+
+\paragraph{Multi-wavelength confinement}
+we consider the case $\lambda \ll \sigma_z \ll z_R$.  In this case we
+can use sum-product formula for the cosines, and then perform the
+integral to write:
+\begin{multline}
+  \int  dz |Z(z)|^2 
+  \cos\left[  f_0(\vec{r},z) - \theta(z) (m+n) \right]
+  \\\times\cos\left[  f_0(\vec{r},z) - \theta(z) (m^\prime+n^\prime) \right]
+  \\\simeq
+  \frac{1}{2}     \cos\left( \theta(z_0) (m+n - m^\prime - n^\prime) \right).
+\end{multline}
+The restriction $\sigma_z \gg \lambda$ is required to drop the fast
+oscillating term.  The restriction $\sigma_z \ll z_R$ is required to
+ensure we can evaluate $\theta(z)$ at $z=z_0$.
+
+NB.  \hl{This is incomplete;} in general we should allow something like
+$\Psi(\vec{r}_\perp,z) = \sum_t \psi_t(\vec{r}_\perp) Z(z) e^{i t k
+  z}$, where $t$ is an integer, $Z(z)$ is the same function as above,
+and $k$ is the wavevector of the cavity mode.  With such a sume, we
+find that the ``fast oscillating'' terms need not give zero, but can
+instead couple $t \leftrightarrow t\pm 2$.  This phyiscs is important
+for connection single mode cavity QED.
+
+
+\paragraph{Sub-wavelength confinement}
+For a very narrow cloud $|Z(z)|^2 = \delta(z-z_0)$.  In particular,
+for a narrow cloud at the centre of the cavity, the result will
+simplify to give:
+\begin{displaymath}
+  \cos\left[ \frac{\pi}{4} (m+n) \right]
+  \cos\left[ \frac{\pi}{4} (m^\prime+n^\prime) \right]
+\end{displaymath}
+(this assumes $q_0$ is even, so that the mode $m=n=0$ has an antinode
+at the centre of the cavity).  This factor has the effect of meaning
+that only modes with $m+n$ equal to an integer multiple of $4$ can
+contribute to any sum.
+
+\section{Weak coupling expansion}
+\label{sec:weak-coupl-expans}
+
+In the confocal case, all relevant $\omega_{m,n,q}$ are degenerate and
+the light field equation has the form:
+\begin{displaymath}
+  i \partial_t \vec{\alpha} = 
+  \vec{f} - (\Delta + i \kappa) \vec{\alpha}
+  - E_0 \vec{A} \vec{\alpha}
+\end{displaymath}
+where $\Delta = \omega_{\text{pump}} - \omega_{m,n,q}$ and $\vec{A}$
+is a matrix given by the overlaps with the atom cloud.  If we assume
+$E_0$ is weak, and $\kappa$ is fast enough to reach steady state we
+may use perturbation theory to give:
+\begin{displaymath}
+  \alpha_{m,n} = \frac{f_{m,n}}{\Delta+i\kappa}
+  - \frac{E_0}{(\Delta+i\kappa)^2}
+  \sum_{m^\prime, n^\prime} A_{mn, m^\prime n^\prime} f_{m^\prime,n^\prime}
+\end{displaymath}
+Substituting this back into the GPE gives a form:
+\begin{displaymath}
+  i \hbar \partial_t \psi(r) =
+  \left(
+    - \frac{\hbar^2 \nabla^2}{2m} 
+    + V_{\text{eff}}(\vec{r}) 
+    + \int d^2\vec{r}^\prime
+    U(\vec{r}, \vec{r}^\prime) |\psi(\vec{r}^\prime)|^2
+  \right)
+  \psi(r).
+\end{displaymath}
+The total trapping potential has the form:
+\begin{displaymath}
+  V_{\text{eff}}(\vec{r}) 
+  =
+  V_{\text{ext}}(\vec{r}) 
+  +
+  \frac{E_0}{\Delta^2+\kappa^2}
+  \int dz \left| Z(z)   \sum_{m,n} f_{m,n} u_{m,n}(\vec{r},z) \right|^2.
+\end{displaymath}
+If we work in the approximation $\lambda \ll \sigma_z \ll z_R$ discussed
+above, we can perform the $z$ integral to give:
+\begin{multline}
+  V_{\text{eff}}(\vec{r}) 
+  =
+  V_{\text{ext}}(\vec{r}) 
+  +
+  \frac{E_0}{\Delta^2+\kappa^2}
+  \frac{1}{2 w(z_0)^2}
+  \\
+  \times
+  \sum_{i,j}  f_{i,j} \chi_i(\tilde{x}) \chi_j(\tilde{y})
+  \sum_{k,l}f_{k,l} \chi_k(\tilde{x}^\prime) \chi_l(\tilde{y}^\prime)
+  \\
+  \cos\Big(\theta(z_0)(i+j-k-l)\Big)
+\end{multline}
+
+
+
+More interesting is the effective interaction. If we may assume that
+$f_{m,n}$ is real, and we work with Hermite functions (which are
+real\footnote{The real thing is important to be able to stop worrying
+  about conjugation}) then this can be written as follows:
+\begin{multline}
+  U(\vec{r}, \vec{r}^\prime)
+  = \frac{2 \Delta E_0^2}{(\Delta^2+\kappa^2)^2}
+  \iint dz dz^\prime |Z(z) Z(z^\prime)|^2
+  \\
+  \sum_{m,n,i,j,k,l}
+  f_{i,j} u_{i,j}(\vec{r}, z)
+  f_{k,l} u_{k,l}(\vec{r}^\prime, z^\prime)
+  u_{m,n}(\vec{r},z)
+  u_{m,n}(\vec{r}^\prime,z^\prime).
+\end{multline}
+Working in the approximation $\lambda \ll \sigma_z \ll z_R$ we may perform
+the $z, z^\prime$ integrals, and find
+\begin{widetext}
+\begin{multline}
+  U(\vec{r}, \vec{r}^\prime)
+  = \frac{2 \Delta E_0^2}{(\Delta^2+\kappa^2)^2}
+  \frac{1}{8w(z_0)^4}
+  \sum_{i,j}  f_{i,j} \chi_i(\tilde{x}) \chi_j(\tilde{y})
+  \sum_{k,l}f_{k,l} \chi_k(\tilde{x}^\prime) \chi_l(\tilde{y}^\prime)
+  \\
+  \sum_{n,m}
+  \chi_n(\tilde{x}) 
+  \chi_n(\tilde{x}^\prime) 
+  \chi_m(\tilde{y})
+  \chi_m(\tilde{y}^\prime)
+  \biggl[
+    \cos\Bigl( \theta(z_0) (i+j+k+l - 2(m+n))  \Bigr)
+    +
+    \cos\Bigl( \theta(z_0) (i+j-k-l  \Bigr)
+  \biggr].
+\end{multline}
+where we have defined $\tilde{x} = \sqrt{2} x/w(z_0)$ for brevity.
+
+We may then note that this is equivalent to the following form,
+\begin{multline}
+  U(\vec{r}, \vec{r}^\prime)
+  = \frac{2 \Delta E_0^2}{(\Delta^2+\kappa^2)^2}
+  \frac{1}{8w(z_0)^4}
+  \Re\Biggl[
+    F\left(\alpha-i\theta(z_0), \frac{\sqrt{2}\vec{r}}{w(z_0)}\right) 
+    F\left(\alpha-i\theta(z_0),\frac{\sqrt{2}\vec{r^\prime}}{w(z_0)}\right) 
+    K\left(\alpha+2i\theta(z_0), \frac{\sqrt{2}\vec{r}}{w(z_0)}, \frac{\sqrt{2}\vec{r}^\prime}{w(z_0)}\right)
+    \\+
+    F\left(\alpha+i\theta(z_0), \frac{\sqrt{2}\vec{r}}{w(z_0)}\right) 
+    F\left(\alpha-i\theta(z_0),\frac{\sqrt{2}\vec{r}^\prime}{w(z_0)}\right)
+    K\left(\alpha, \frac{\sqrt{2}\vec{r}}{w(z_0)}, \frac{\sqrt{2}\vec{r}^\prime}{w(z_0)}\right)
+    \Biggr]
+\end{multline}
+\end{widetext}
+where the (complex) pump terms are given by:
+\begin{equation}
+  \label{eq:3}
+  F(\alpha, \tvr) 
+  =
+  \sum_{n,m}f_{n,m} \chi_n(\tilde{x}^\prime) \chi_m(\tilde{y}^\prime)
+  e^{-\alpha(m+n)}
+\end{equation}
+and the complex kernel terms are given by:
+\begin{equation}
+  \label{eq:4}
+  K(\alpha, \tvr, \tvrp)
+  =
+  \sum_{n,m}
+  \chi_n(\tilde{x}) 
+  \chi_n(\tilde{x}^\prime) 
+  \chi_m(\tilde{y})
+  \chi_m(\tilde{y}^\prime)
+  e^{-\alpha(m+n)}.
+\end{equation}
+In both these expressions, the summation must be restricted to values
+where $m+n$ is even.  Having introduced these terms, we may also note
+that the trapping term has the form:
+\begin{multline}
+    V_{\text{eff}}(\vec{r}) 
+  =
+  V_{\text{ext}}(\vec{r}) 
+  +
+  \frac{E_0}{\Delta^2+\kappa^2}
+  \frac{1}{2 w(z_0)^2}\left|
+    F(\alpha-i\theta(z_0), \tvr) 
+  \right|^2.
+\end{multline}
+Then, recalling the definition of $f_{m,n}$, we may write
+\begin{multline}
+  F(\alpha, \tvr) 
+  = \int d^2\vec{r}^\prime f(\vec{r}^\prime) \sum_{m,n}
+  \chi_n\left( \frac{\sqrt{2} x^\prime}{w(z_R)} \right)
+  \chi_n\left( \frac{\sqrt{2} y^\prime}{w(z_R)} \right)
+  \\\times  
+  \chi_n(\tilde{x}) 
+  \chi_m(\tilde{y})
+  e^{-\alpha(m+n)},
+\end{multline}
+which is clearly related to the Kernel.  It is convenient to
+write $\tilde{{x}}^\prime = \sqrt{2} x^\prime / w(z_R)$ so that we have:
+\begin{displaymath}
+  F(\alpha, \tvr) 
+  = \frac{w(z_R)^2}{2}
+  \int d^2\tilde{{\vec{r}}}^\prime
+  f\left( \frac{w(z_R) \tilde{{\vec{r}}}^\prime}{\sqrt{2}} \right)
+  K(\alpha, \tvr, \tilde{{\vec{r}}}^\prime).
+\end{displaymath}
+This has the meaning of rescaling the pump profile from the waist size
+at the input to the waist size at the centre, and then propagating in
+the confocal geometry.   The integrals can in fact be carried out
+for a Gaussian pump spot; see section~\ref{sec:gaussian-pump-spot}
+
+For the Kernel term, we may use the fact that we are summing
+over Gauss-Hermite functions and use the complex time
+Green's function:
+\begin{multline}
+  \label{eq:5}
+  G(\tilde{x}, \tilde{x}^\prime; \alpha)
+  \equiv
+  \sum_n 
+  \chi_n(\tilde{x}) 
+  \chi_n(\tilde{x}^\prime) 
+  e^{-n \alpha}
+  = \frac{1}{\sqrt{\pi \sinh \alpha}}
+  \\
+  \exp\left[
+  - \frac{1}{2} \left(
+    \frac{(x^2 + x^{\prime 2})}{\tanh\alpha}
+    - \frac{2 x x^\prime}{\sinh \alpha} \right)
+  + \frac{\alpha}{2} \right],
+\end{multline}
+where $\alpha$ may be complex.  A real part of $\alpha$ corresponds to
+imposing a cutoff.  These sums involve odd and even values of $m,n$, 
+however we can add a factor $\frac{1}{2}[1+(-1)^n]$ to select only 
+the even order terms
+
+In terms of this the kernel has the form:
+\begin{multline}
+  \label{eq:6}
+  K(\alpha, \tvr, \tvrp)
+  =
+  \frac{1}{2} \Bigl[
+    G(\tilde{x}, \tilde{x}^\prime; \alpha)
+    G(\tilde{y}, \tilde{y}^\prime; \alpha)
+    \\+
+    G(-\tilde{x}, \tilde{x}^\prime; \alpha)
+    G(-\tilde{y}, \tilde{y}^\prime; \alpha)
+  \Bigr].
+\end{multline}
+
+
+\subsection{Gaussian pump spot}
+\label{sec:gaussian-pump-spot}
+
+If we consider $f(r) = f_0 \exp(-r^2/2\sigma_P^2)$, then we may evaluate
+$F(\alpha, \tvr)$ in closed form.  First we note that for
+any separable profile we may use Eq.~(\ref{eq:6}) to write:
+\begin{equation}
+  F(\alpha, \tvr) 
+  =
+  \frac{f_0}{2} \Bigl[
+    \phi(\alpha, \tilde{x}) 
+    \phi(\alpha, \tilde{y}) 
+    +
+    \phi(\alpha, -\tilde{x}) 
+    \phi(\alpha, -\tilde{y}) 
+  \Bigr]
+\end{equation}
+where 
+\begin{displaymath}
+  \phi(\alpha, \tilde{x})
+  =
+  \int du e^{-u^2/2\sigma_P^2}
+  G(\tilde{x}, u, \alpha).
+\end{displaymath}
+Then we note that from Eq.~(\ref{eq:5}) we see that $G$ is Gaussian
+and we may write
+\begin{multline}
+  \phi(\alpha, \tilde{x})
+  = \frac{e^{\alpha/2}}{\sqrt{\pi \sinh \alpha}}
+  \exp\left(    - \frac{\tilde{x}^2}{2\tanh \alpha}\right)
+  \\\times
+  \int du \exp\left[
+    - \frac{u^2}{2} \left(\frac{1}{\tanh \alpha}+\frac{1}{\sigma_P^2}\right)
+    + \frac{u \tilde{x}}{\sinh\alpha}
+  \right].  
+\end{multline}
+Then, after completing the square and some tediuous algebra we find:
+\begin{multline}
+  \phi(\alpha, \tilde{x})
+  =
+  \sqrt{\frac{2e^\alpha}{%
+      \sinh\alpha\left(\frac{1}{\tanh \alpha}+\frac{1}{\sigma_P^2}\right)}}
+  \\
+  \exp\left[
+    - \frac{\tilde{x}^2}{2}
+    \left(
+      \frac{ 1 + \sigma_P^2 \tanh\alpha}{\sigma_p^2 + \tanh\alpha} 
+    \right)
+  \right]
+\end{multline}
+Since this depends only on $\tilde{x}^2$ we may immediately write:
+\begin{multline}
+  \label{eq:7}
+  F(\alpha, \tilde{r}) =
+  \left(\frac{2  f_0 \sigma_P^2 e^\alpha}{%
+    \sigma_P^2 \cosh\alpha + \sinh\alpha }\right)
+  \\
+  \exp\left[
+    - \frac{\tilde{r}^2}{2}
+    \left(
+      \frac{ \cosh + \sigma_P^2 \sinh\alpha}{\sigma_p^2\cosh\alpha + \sinh\alpha} 
+    \right)
+  \right]
+\end{multline}
+
+
+In the limit of a very narrow pump spot we find
+\begin{equation}
+  \label{eq:8}
+  F(\alpha, \tilde{r}) =
+  \left(\frac{2 f_0 \sigma_P^2 }{\sinh\alpha }\right)
+  \exp\left[\alpha
+    - \frac{\tilde{r}^2}{2 \tanh(\alpha)}
+  \right]
+\end{equation}
+which corresponds exactly to $G(\tilde{x},0,\alpha)$ (noting that we
+failed to normalise the pump spot. In the opposite limit of a
+very wide spot we get
+\begin{equation}
+  \label{eq:9}
+  F(\alpha, \tilde{r}) =
+  \left(\frac{2 f_0}{\cosh\alpha}\right)
+  \exp\left[\alpha
+    - \frac{\tilde{r}^2}{2}\tanh\alpha
+  \right]
+\end{equation}
+
+Recalling that $\alpha \to 0$ is the limit in which all modes are
+included, these show that with all modes included, a sharp spot is
+sharp and a flat spot is flat.  Vice versa, if $\alpha \to \infty$, we
+have a single mode cavity and then the effective pump spot size is the
+same regardless of the actual spot size.
+
+\subsection{Simple limits}
+\label{sec:simple-limits}
+
+This section uses the analytic integral results in
+section~\ref{sec:gaussian-pump-spot} to find various simple limits of
+the interaction terms.  Specifically, we wish to write things in terms
+of the vector quantities $\tvr, \tvrp$
+rather than their components, as far as is possible.  
+
+The fact the functions $F(\alpha,\tvr)$ depend only on 
+$\tvr^2$ means that we can always write:
+\begin{equation}
+  \label{eq:10}
+  U(\vec{r},\vec{r}^\prime) =
+  U_1\left(\frac{\sqrt{2}\vec{r}}{w(z_0)},
+    \frac{\sqrt{2}\vec{r}^\prime}{w(z_0)}\right) 
+  +
+  U_1\left(\frac{\sqrt{2}\vec{r}}{w(z_0)},
+    -\frac{\sqrt{2}\vec{r}^\prime}{w(z_0)}\right) 
+\end{equation}
+making mainfest the hour-glass symmetry of the confocal case, where we
+will define:
+\begin{widetext}
+\begin{multline}
+  \label{eq:11}
+  U_1(\tvr,-\tvrp) = 
+  \frac{\Delta E_0^2}{8 w(z_0)^4 (\Delta^2+\kappa^2)^2} 
+  \biggl[
+    F(\alpha-i\theta(z_0), \tvr) F(\alpha-i\theta(z_0), \tvr) 
+    K_1(\alpha+2i\theta z_0, \tvr, \tvrp) 
+  \\+
+    F(\alpha-i\theta(z_0), \tvr) F(\alpha+i\theta(z_0), \tvr) 
+    K_1(\alpha, \tvr, \tvrp)
+    +
+    \text{H.c.}
+  \biggr]
+\end{multline}
+\end{widetext}
+ and we
+may define:
+\begin{equation}
+  \label{eq:12}
+  K_1(\alpha, \tvr, \tvrp)
+  =
+  \frac{e^\alpha}{2\pi \sinh\alpha}
+  \exp\left[
+    - \frac{(\tvr^2+\tvr^{\prime 2})}{2 \tanh\alpha}
+    + \frac{\tvr\cdot\tvrp}{\sinh\alpha}
+  \right]
+\end{equation}
+
+
+To explore the case most likely to show some level of translational
+invariance we consider the large pump spot limit, Eq.~(\ref{eq:9}),
+and the limit $\alpha \to 0$ in Eq.~(\ref{eq:11}), so that
+(unrealistically) all transverse modes are supported by the cavity.
+We note first that 
+\begin{displaymath}
+  \lim_{\alpha \to 0}
+  \frac{1}{2\pi \alpha}
+  \exp\left[
+    - \frac{(\tvr-\tvrp)^2}{2 \alpha}
+  \right] 
+  = \delta(\tvr-\tvrp)
+\end{displaymath}
+so that the second contribution in Eq.~(\ref{eq:11}) becomes:
+\begin{displaymath}
+  U_1(\tvr, \tvrp) = \ldots + 
+  U_0  \frac{4}{\cos^2\theta}
+  \cos\left[ \frac{(\tvr^2 - \tvr^{\prime 2})}{2\tan\theta}  \right]
+  \delta(\tvr-\tvrp).
+\end{displaymath}
+with $U_0 = 2\Delta E_0^2 f_0^2 / (8 w(z_0)^4 (\Delta^2+\kappa^2)^2)$.
+Note that this quantity includes a dependence on the pump
+strength $f_0$.  The units of this quantity are
+energy, since the units of area in $[E_0]^2=[E]^2[L]^4$ cancel the beam
+waist factor.  This is correct, in that these are the units 
+of $U(\tilde{r}, \tilde{r}^{\prime})$, and the total interaction
+energy shift involves an integral over the atomic density at 
+other locations, cancelling factors of area.
+
+The Dirac delta means that the $\tvr, \tvrp$ dependenent cosine term
+in fact reduces to $1$.  For the other term we may define:
+\begin{equation}
+  A(\theta, \tvr,\tvrp)=
+  F(-i\theta, \tvr) F(-i\theta, \tvr) 
+  K_1(2i\theta, \tvr, \tvrp)  
+\end{equation}
+in terms of which we have 
+\begin{equation}
+    U_1(\tvr, \tvrp) = U_0 \left[
+      \Re[A(\theta(z_0), \tvr,\tvrp)]
+      + 
+      4 \frac{\delta(\tvr-\tvrp)}{\cos^2\theta}
+    \right].
+\end{equation}
+
+The remaining function takes the form:
+\begin{multline}
+  A(\theta,\tvr,\tvrp) = 
+  \frac{4 }{2\pi i \cos^2\theta \sin(2\theta)} \times
+  \\
+  \exp\left[
+    \frac{i(\tvr^2 + \tvr^{\prime 2})}{2}
+    \left(\tan \theta + \frac{1}{\tan(2\theta)} \right)
+    - \frac{i \tvr\cdot\tvrp}{\sin(2\theta)} \right].
+\end{multline}
+We may use that:
+\begin{displaymath}
+  \tan \theta + \frac{1}{\tan2\theta}
+    = frac{1}{\sin 2 \theta},
+\end{displaymath}
+so as to find:
+\begin{multline}
+  A(\theta,\tvr,\tvrp) = 
+  \frac{4 }{2\pi i \cos^2\theta \sin(2\theta)} \times
+  \\
+  \exp\left[
+    \frac{i(|\tvr -  \tvr^{\prime}|^2}{2\sin 2 \theta}
+  \right].
+\end{multline}
+
+
+If we  consider instead a small pump spot we get:
+\begin{multline}
+  A(\theta,\tvr,\tvrp) = 
+  \frac{4 }{2\pi i \cos^2\theta \sin(2\theta)} \times
+  \\
+  \exp\left[
+    \frac{i(\tvr^2 + \tvr^{\prime 2})}{2}
+    \left(-\frac{1}{\tan \theta} + \frac{1}{\tan(2\theta)} \right)
+    - \frac{i \tvr\cdot\tvrp}{\sin(2\theta)} \right].
+\end{multline}
+and we may use that
+\begin{displaymath}
+  -\frac{1}{\tan \theta} + \frac{1}{\tan 2\theta }
+    = frac{-1}{\sin 2 \theta}.
+\end{displaymath}
+
+
+
+Some simple limits exist of this expression.  If $\theta \to 0$ we
+get:
+\begin{displaymath}
+  A(\theta,\tvr,\tvrp) = 
+  \frac{1}{i \pi \theta} 
+  \exp\left[
+    -\frac{i(\tvr - \tvrp)^2}{4 \theta}
+  \right].
+\end{displaymath}
+If $\theta = (\pi/2) - \eta$ we get
+$\cos\theta \simeq \eta, \sin\theta \simeq 1$ and so:
+\begin{displaymath}
+  A(\theta,\tvr,\tvrp) = 
+  \frac{ }{\pi i \eta^3} 
+  \exp\left[
+    - \frac{i(\tvr - \tvrp)^2}{4\eta} \right]
+\end{displaymath}
+both of which become $\propto \delta(\tvr-\tvrp)$ in the limiting
+cases.  This states that at the ends of the cavity, we have fully
+local interactions (other than that we have the mirror,
+i.e. hourglass, symmetry).  The different factors of $1/\theta$ and
+$1/\eta^3$ reflect the fact that an infinite input pump gets imaged to
+a delta function profile at the far end of the cavity.
+
+Perhaps more interesting is that for $\theta=\pi/4$, i.e. at the
+centre of the cavity, we get $\sin\theta=\cos\theta=1/\sqrt{2}$
+which gives
+\begin{displaymath}
+  A(\theta,\tvr,\tvrp) = 
+  \frac{4}{i\pi } 
+  \exp\left[
+    -\frac{i(\tvr - \tvrp)^2}{2}
+  \right]
+\end{displaymath}
+Thus, in the centre of the cavity we may write:
+\begin{equation}
+  \label{eq:13}
+  U_1(\tvr, \tvrp, z_0=0) = \frac{4 U_0}{\pi} \left[
+    \sin\left(\frac{(\tvr - \tvrp)^2}{2}\right)
+    + 
+    2\pi \delta(\tvr-\tvrp)
+  \right].
+\end{equation}
+Since this is combined with the mirrored version, we seem overall to
+have two quasi-local (up to mirror symmetry) interactions, one of
+which is local, one of which is not, in contrast to the cavity ends
+where everything is local.   
+
+We may also swap terms between $U_1(\tvr, \tvrp)$ and $U_1(\tvr,
+\tvrp)$ to make $U_1(\tvr,\tvrp)$ a function only of $\tvr-\tvrp$
+This then allows us to write::
+\begin{displaymath}
+  i \hbar \partial_t \psi(\tvr) =
+  \ldots +
+  \int d^2 \tvrp
+  u_1(\tvr- \tvrp) 
+  \rho_S(\tvrp) \psi(\tvr)
+\end{displaymath}
+with $u_1(\vec{s}) = (4 U_0/\pi) \left[ \sin(\vec{s}^2/2) + 2\pi
+  \delta(\vec{s})\right]$ and $\rho_S(\tvrp) = \left[ |\psi(\tvrp)|^2 +
+  |\psi(-\tvrp)|^2 \right]$ being a symmetric density. The interaction
+is thus written as a convolution, and we note that:
+\begin{displaymath}
+  \tilde{u}_1(\vec{k}) = 
+  \int {d^2\vec{s}} e^{i \vec{k}\cdot\vec{s}}
+  u_1(\vec{s}) 
+  =
+  8 U_0
+  \left[
+    \cos\left(\frac{\vec{k}^2}{2} \right)
+    + 1
+  \right]
+\end{displaymath}
+ If the factors are all
+correct, this suggests that the system is exactly marginally stable at
+wavevectors $k^2 = (2n-1) \pi$, but is never actually unstable.  One
+should note however that this calculation was only at leading order in
+matter-light coupling, and higher order corrections may modify this.
+
+
+
+\subsection{Bogoliubov analysis}
+\label{sec:bogoliubov-analysis}
+
+If we consider the GPE without any trap (external or effective)
+\begin{displaymath}
+  i \partial_t \psi(\vec{r})
+  = - \frac{\nabla^2}{2m} \psi(\vec{r})
+  + \int d^2\vec{r}^\prime U(\vec{r}-\vec{r}^\prime) |\psi(\vec{r}^\prime)|^2 
+  \psi(\vec{r})
+\end{displaymath}
+then we may consider perturbation about the uniform
+gas $\psi = e^{-i \mu t} \sqrt{\rho_0} + \delta \psi$ where
+\begin{displaymath}
+  \mu = \int d^2\vec{r}^\prime U(\vec{r}-\vec{r}^\prime) \rho_0
+\end{displaymath}
+and
+\begin{multline}
+  i \partial_t \delta \psi(\vec{r})
+  = - \frac{\nabla^2}{2m} \delta\psi(\vec{r})
+  + \\\int d^2\vec{r}^\prime U(\vec{r}-\vec{r}^\prime) \rho
+  \left(
+     \delta \psi(\vec{r})
+    +
+    \delta \psi(\vec{r}^\prime)
+    +
+    \delta \psi^\ast(\vec{r}^\prime)
+  \right).
+\end{multline}
+Then, Fourier transforming, and using the integral over
+$\vec{r}+\vec{r}^\prime$ to impose momentum conservation we find:
+\begin{displaymath}
+  i \partial_t \delta \psi_{\vec{k}}
+  = (\mu + \epsilon_{\vec{k}}) \delta \psi_{\vec{k}}
+  + \rho_0\tilde{u}_1(\vec{k}) ( \delta \psi_{\vec{k}} +\delta \psi^\ast_{\vec{k}}),
+\end{displaymath}
+and so a Bogoliubov--de Gennes parameterisation of the fluctuations
+gives the normal mode frequencies $\nu_k =\sqrt{\epsilon_k(\epsilon_k
++2 \rho_0\tilde{u}_1(\vec{k}))}$.  Thus instability
+occurs if
+\begin{displaymath}
+  2 \rho_0\tilde{u}_1(\vec{k}) < - \epsilon_{\vec{k}}.
+\end{displaymath}
+Taking the form of $\tilde{u}_1(\vec{k})$ given above
+We may thus conclude that:
+\begin{itemize}
+\item Instability only occurs if $U_0$ is negative.
+\item If $U_0$ is negative, instability occurs over a range that
+  extends to $k=0$.  If we define $\lambda = 16 m |U_0| \rho_0$
+  (assuming $U_0<0$ and denote $x=k^2/2$ the condition becomes
+  \begin{displaymath}
+    \lambda (1+ \sin(x)) > x.
+  \end{displaymath}
+  We see that for small $\lambda$ this is satisfied for
+  $0<x<\lambda$.  The most unstable
+  mode is $x \simeq \lambda/2$, 
+\item At large $\lambda$, multiple disconnected regions of $k$
+  are unstable.  The most unstable mode correpsonds
+  to $x = (2n+1/2)\pi + \theta$ where $n$ is choosen
+  such that $(2n+1/2)\pi$ is as close to $\lambda$ as
+  possible, and $\theta \sim (\lambda-x)/\lambda^2$.  i.e. there
+  are step-like plateus of integer $n$.
+\end{itemize}
+
+The above means that for an uniform gas, as soon as the interaction
+is of the sign to allow for instability, instability immediately occurs,
+without a threshold pump power.  However, other questions remain
+which may have thresholds.  In particular:
+\begin{itemize}
+\item For a finite size cloud, there will be a minium $k$ possible ---
+  does this lead to a threshold $\rho_0 U_0 \simeq (1/2m R_0^2)$ as
+  for the metastability of a standard attractive condensate.  Indeed,
+  the basic question on the $z=0$ plane is: does the instability differ
+  from that for an attractive condensate at all?
+\item How is the behaviour off the central plane?  Does instability
+  exist for both signs of $U_0$ or not?  Self imaging seems
+  unavoidable, and one might argue that this means that either one has
+  a repulsive self-imaged interaction, in which case the other term
+  has to be relatively larger than the self-imaging (which is not
+  possible at $z=0$, and which may turn out to always be impossible).
+  Alternatively, if the self-imaging part is attractive, do we just
+  get standard instabilities of attractive gases.
+\end{itemize}
+
+
+
+\section{Synthetic dynamic (gauge) fields}
+\label{sec:synth-gauge-fields}
+
+If we make use of the Spielman scheme for engineering magnetic fields, we
+start from the Hamiltonian:
+\begin{multline}
+  \label{eq:14}
+  H = \sum_k \frac{\hbar^2 k^2}{2m} \Phi^\dagger_k \Phi^\dagger_k
+  + \frac{\Omega}{2} 
+  \phi^\dagger_{\vec{k} + 2 q \hat{\vec{x}},b} \phi^{}_{\vec{k}, a}e^{-i\delta_0 t}
+  + \text{H.c.}
+  \\
+  - \int d^3r \Phi^\dagger(\vec{r}) 
+  \begin{pmatrix}
+    E_a & 0 \\ 0 & E_b 
+  \end{pmatrix}
+  \Phi^{}(\vec{r}) 
+  \hat{I}(\vec{r})
+  + \hat{H}^{(0)}_{\text{cavity}}
+\end{multline}
+where we have written
+\begin{displaymath}
+  \Phi_{\vec{k}} = 
+  \begin{pmatrix}
+    \phi^{}_{\vec{k}.a} \\ \phi^{}_{\vec{k}.b}
+  \end{pmatrix},
+  \quad \text{and} \quad
+  \hat{I}(\vec{r}) = \int dz |Z(z)|^2 |\hat{\varphi}(\vec r, z)|^2.
+\end{displaymath}
+Note that $\hat{\varphi}(\vec{r},z)$ is the photon field as defined in
+Eq.~(\ref{eq:2}), and should not be confused with the symbol $\phi$.
+Note 
+This now describes atoms with two internal states $a,b$ coupled via a
+two-photon Raman process of strength $\Omega/2$, and detuning
+$\delta_0$ from resonance.  The light shifts $E_a,E_b$ are crucially
+required to be different for the two levels.  We note that $\hat{I}$
+is in general an operator, as it involves cavity photon operators.
+This will be important as we will wish to find the photon equations of
+motion after adiabatic eliminiation of atomic excited states.
+
+Following Spielman directly, we will assume a Born-Oppenheimer limit,
+in space, which requires that $I(\vec{r})$ must vary slowly on the
+scale of a wavelength of light.  This is consistent with our earlier
+assumption that $\lambda \ll z_R$, which implies that $\lambda \ll
+\sqrt{\lambda z_R} \sim w_0 \ll z_R$.  In this case, we may
+write the atomic problem as:
+\begin{math}
+  \hat{H} = \sum_k 
+  \tilde{\Phi}^\dagger_{\vec{k}}
+  \vec{h}_{\vec{k}}
+  \tilde{\Phi}^{}_{\vec{k}}
+\end{math}
+where we have written:
+\begin{equation}
+  \label{eq:15}
+  \vec{h}_{\vec{k}} =
+  \begin{pmatrix}
+    V_a(\vec{r}) + (\vec{k} - q \hat{\vec{x}})^2/2m & \Omega/2 \\ 
+    \Omega/2 & V_b(\vec{r}) + (\vec{k} + q \hat{\vec{x}})^2/2m
+  \end{pmatrix}
+\end{equation}
+and
+\begin{displaymath}
+  V_a(\vec{r}) =\frac{\delta_0}{2} - E_a I(r), \qquad
+  V_b(\vec{r}) =-\frac{\delta_0}{2} - E_b I(r).
+\end{displaymath}
+Then following Spielman we can diagaonalise, project onto
+the lowest eigenstate, and expand the eigenvalues in powers
+of $1/\Omega$.   In doing this it is useful to rewrite Eq.~(\ref{eq:15}) 
+as
+\begin{equation}
+\label{eq:16}
+  \vec{h}_{\vec{k}} =
+  \frac{k^2}{2m} + \frac{q^2}{2m}
+  + \bar{V}+
+  \begin{pmatrix}
+    \delta V - \frac{k_x q}{m}
+    & \Omega/2 \\ 
+    \Omega/2 & 
+    -\delta V + \frac{k_x q}{m}
+  \end{pmatrix},
+\end{equation}
+where $V_{a,b} = \bar{V} \pm \delta V(r)$.  After diagonalising and
+expanding, and neglecting constant terms, we can write:
+\begin{multline}
+  \label{eq:17}
+  H_{\text{eff}} 
+  =
+  \int d^3\vec{r}
+  \hat{\psi}^\dagger(\vec{r})
+  \Biggl[
+    Q_E \hat{I}(\vec{r})
+    +
+    \frac{\left(i \nabla - Q_M \hat{\vec{x}} \hat{I}(\vec{r}) \right)^2}{2m^\ast} 
+    \\
+    - M^2 \hat{I}(\vec{r})^2
+  \Biggr]
+  \hat{\psi}^{}(\vec{r})
+  + \hat{H}^{(0)}_{\text{cavity}}
+\end{multline}
+where $Q_E = - (E_a+E_b)/2\left(1-\delta_0/\left(\Omega-4E_R\right)\right)$, $Q_M = q (E_a - E_b) / (\Omega - 4 E_R)$
+and $m^\ast/m =  \Omega/(\Omega - 4 E_R)$ with $E_R=q^2/2m$ being the
+recoil energy of the Raman beams.   There is also a  mass term
+appearing that breaks Gauge symmetry:
+\begin{displaymath}
+  M^2 = 
+   \frac{(E_a-E_b)^2}{4\Omega}
+  \left[
+    1 + \frac{4 q^2}{2m} \frac{m^\ast}{m} \frac{1}{\Omega}
+  \right]
+  =
+   \frac{(E_a-E_b)^2}{4(\Omega-4E_R)}
+\end{displaymath}
+
+Before proceeding further we need to reduce from the three dimensional integrals
+over atomic profiles to a two-dimensional transverse profile, by assuming
+the $z$ dependence follows from $Z(z)$.  In doing this, we note there are
+two distinct terms to consider:
+\begin{displaymath}
+  \int dz |Z(z)|^2 \hat{I}(\vec{r}), \quad\text{and}\quad
+  \int dz |Z(z)|^2 \hat{I}^2(\vec{r}).
+\end{displaymath}
+
+The first of these behaves as previously; writing $\hat{I}(\vec{r}) =
+\hat{\varphi}^\dagger(\vec{r}_\perp,z)\hat{\varphi}^{}(\vec{r}_\perp,z)$
+with $\hat{\varphi}^{}(\vec{r}_\perp,z)=\sum_{nm} \hat{a}_{nm}
+u_{nm}(\vec{r}_\perp,z)$, we may use results from
+above for $\lambda \ll \sigma_z \ll z_R$ to find:
+\begin{multline*}
+  \langle \hat{I}(\vec{r}_\perp,\theta) \rangle \equiv
+  \int dz |Z(z)|^2 \hat{I}(\vec{r})
+\\= \sum^\prime_{nm, n^\prime m^\prime}
+  \hat{a}^\dagger_{nm}
+  \hat{a}^{}_{n^\prime m^\prime}
+  \chi_{nm}(\vec{r}_\perp)
+  \chi_{n^\prime m^\prime}(\vec{r}_\perp)
+  \\\times
+  \frac{1}{2} \cos\left[(m+n-m^\prime -n^\prime)\theta(z_0)\right].
+\end{multline*}
+Here we have introduced $\chi_{mn}$ as the overall transeverse
+wavefunction (i.e. every part of $u_{mn}(\vec{r}_\perp,z)$ except for
+the cosine factor.  We have also introduced temporarily the subscript
+$\perp$ to indicate the in-plane coordinates, perpendicular to the
+cavity axis.  The prime on the summation indicates restricting to even
+values of $m+n$ and of $m^\prime+n^\prime$.  It is convenient to
+introduce the shorthand $\hat{\varphi}^s(\vec{r}_\perp,\theta) =
+\sum^\prime_{nm} \hat{a}^{}_{nm} \chi_{nm}(\vec{r}_\perp) e^{i
+  \theta(m+n)}$ where the superscript $s$ signifies symmetry,
+i.e. $2\hat{\varphi}^s(\vec{r}_\perp,\theta) =
+\hat{\varphi}(\vec{r}_\perp,\theta) +
+\hat{\varphi}(-\vec{r}_\perp,\theta)$ with
+$\hat{\varphi}(\vec{r}_\perp,\theta) = \sum_{nm} \hat{a}^{}_{nm}
+\chi_{nm}(\vec{r}_\perp) e^{i \theta(m+n)}$ a sum over all $m,n$.Using
+this we can write:
+\begin{equation}
+  \langle \hat{I}(\vec{r}_\perp,\theta) \rangle 
+  = \frac{1}{4}\left[
+  |\hat{\varphi}^s(\vec{r}_\perp,\theta)|^2
+  +
+  |\hat{\varphi}^{s}(\vec{r}_\perp,-\theta)|^2
+  \right].
+\end{equation}
+
+For the other integral, we require an average over $z$ of
+a product of four cosine terms. This requires using the trigonometric
+sum and difference formulae twice. This produces eight terms,
+with one oscillating as $4f_0(\vec{r}_\perp,z)$, 
+four oscillating as $2f_0(\vec{r}_\perp,z)$, 
+and three without any fast oscillation. This therefore gives:
+\begin{multline*}
+  \langle \hat{I}^2(\vec{r}_\perp,\theta) \rangle 
+  \equiv
+  \int dz |Z(z)|^2 \hat{I}(\vec{r})
+  = \!\!\!\!\sum^\prime_{N_1,N_2,N_3,N_4}\!\!\!\!
+  \hat{a}^\dagger_{N_1}
+  \hat{a}^\dagger_{N_2}
+  \hat{a}^{}_{N_3}
+  \hat{a}^{}_{N_4}
+  \\
+  \times
+  \chi_{N_1}(\vec{r}_\perp)
+  \chi_{N_2}(\vec{r}_\perp)
+  \chi_{N_3}(\vec{r}_\perp)
+  \chi_{N_4}(\vec{r}_\perp)
+  \\\times
+  \frac{1}{8} 
+  \biggl\{
+  \shoveright{
+  \cos\left[(m_{N_1} + m_{N_2} -m_{N_3} - m_{N_4}+\ldots)\theta(z_0)\right]}
+  \phantom{\bigr\}.}
+  \\\shoveright{+
+  \cos\left[(m_{N_1} - m_{N_2} -m_{N_3} + m_{N_4}+\ldots)\theta(z_0)\right]}
+  \phantom{\bigr\}.}
+  \\+
+  \cos\left[(m_{N_1} - m_{N_2} +m_{N_3} - m_{N_4}+\ldots)\theta(z_0)\right]
+  \biggr\}.
+\end{multline*}
+Here we have used $N$ as a label of both $m$ and $n$, and the ellipsis
+represents the equivalent terms $n_{N}$, with the same pattersn of
+minus signs.  Using the same transverse fields allows us to write 
+\begin{multline}
+  \langle \hat{I}^2(\vec{r}_\perp,\theta) \rangle
+  = \frac{1}{16}\biggl[
+  |\hat{\varphi}^s(\vec{r}_\perp,\theta)|^4
+  +
+  4|\hat{\varphi}^s(\vec{r}_\perp,\theta)|^2
+  |\hat{\varphi}^{s}(\vec{r}_\perp,-\theta)|^2
+  \\+
+  |\hat{\varphi}^{s}(\vec{r}_\perp,-\theta)|^4
+  \biggr].
+\end{multline}
+This can also be written as:
+\begin{displaymath}
+  \langle \hat{I}^2(\vec{r}_\perp,\theta) \rangle
+  = 
+  \langle \hat{I}(\vec{r}_\perp,\theta) \rangle^2
+  + \frac{1}{8}
+  |\hat{\varphi}^s(\vec{r}_\perp,\theta)|^2
+  |\hat{\varphi}^{s}(\vec{r}_\perp,-\theta)|^2.
+\end{displaymath}
+This contributes further to this mismatch of coefficients of
+quadratic and quartic terms.  We may thus write the in-plane
+effective problem (replacing $\vec{r}_\perp \to \vec{r}$ as
+there is no ambiguity) as:
+\begin{multline}
+  H_{\text{eff}} 
+  =
+  \int d^2\vec{r}
+  \hat{\psi}^\dagger(\vec{r})
+  \Biggl[
+    Q_E \langle\hat{I}(\vec{r},\theta)\rangle
+    +
+    \frac{\left(i \nabla - 
+        Q_M \hat{\vec{x}} \langle\hat{I}(\vec{r},\theta)\rangle \right)^2}{2m^\ast} 
+    \\
+    - M^2 \langle\hat{I}(\vec{r},\theta)\rangle^2
+    + \left( \frac{Q_M^2}{2m} - M^2\right)\frac{
+  |\hat{\varphi}^s(\vec{r},\theta)|^2
+  |\hat{\varphi}^{s}(\vec{r},-\theta)|^2}{8}
+  \Biggr]
+  \hat{\psi}^{}(\vec{r})
+  \\+ \hat{H}^{(0)}_{\text{cavity}}.
+\end{multline}
+This can be written as
+\begin{equation}
+  \label{eq:18}
+  H_{\text{eff}} 
+  =
+  \int d^2\vec{r} 
+  \hat{\psi}^\dagger(\vec{r})
+  \hat{H}_{A,1Q}
+  \hat{\psi}^{}(\vec{r})
+  + \hat{H}^{(0)}_{\text{cavity}}
+\end{equation}
+and in what follows we will focus on the form of the first quantised
+atomic Hamiltonian $\hat{H}_{A,1Q}$.
+
+
+
+Some things to note:
+\begin{itemize}
+\item Note that, as discussed by Spielmann, the diamagnetic term is
+  subtracted off.  The effects of this on the atomic motion can be
+  cancelled by adding a background trapping potential.  The effects of
+  this on the electromagnetic field are not so simple --- this seems
+  to mean the synthetic magnetic field is not a true gauge potential
+  --- it breaks the gauge symmetry in exactly the way that BCS did
+  before Anderson.
+\item Note also that the current is not exactly a source term for the
+  cavity photons --- it shifts there frequency. Similarly, the
+  quasi-vector-potential $\hat{x} I(\vec{r})$ is not linear in the
+  photon field, but is quadratic. However, this is partly ameliorated
+  by the fact that there is longitudinal pumping.  One can always
+  eliminate the pump by transforming $\hat{a} \to \hat{a} + \alpha$,
+  and after that, there is a part of the vector potential that is
+  linear int the operators.
+\end{itemize}
+
+Let us now consider the best that seems possible making use of the
+linear shift due to the pump, discussed above, and potential
+cancellations between $Q_E$ and $M^2$ terms.  We will note that the
+linear coupling to the pump can be eliminated by a shift
+$\hat{\varphi} \to \hat{\varphi} + \Phi$ where $\Phi(\vec{r},\theta) =
+\sum^\prime_{mn} {f}_{mn} e^{i \theta(m+n)} u_{mn}(r) / (\Delta_{mn} -
+i \kappa)$.  We may then insert this into the above definitions and
+and expand to leading order.  This then gives:
+\begin{multline}
+  \langle \hat{I}(\vec{r},\theta) \rangle 
+  =
+  \frac{1}{4}\biggl(
+  I_0(\vec{r},\theta) + I_0(\vec{r},-\theta)
+  +
+  \\  
+    \Phi^\ast(\vec{r},\theta) \hat{\varphi}(\vec{r},\theta)
+    +\text{H.c.}
+    +
+    \Phi^\ast(\vec{r},-\theta) \hat{\varphi}(\vec{r},-\theta)
+    +\text{H.c.}
+  \\ 
+  +
+  \hat{\varphi}^\dagger(\vec{r},\theta) \hat{\varphi}^{}(\vec{r},\theta)
+  +
+  \hat{\varphi}^\dagger(\vec{r},-\theta) \hat{\varphi}^{}(\vec{r},-\theta)
+  \biggr)
+\end{multline}
+and the additional contribution to $\langle \hat{I}^2 \rangle$ is
+\begin{multline}
+  \langle \hat{I}^2(\vec{r},\theta) \rangle
+  = 
+  \langle \hat{I}(\vec{r},\theta) \rangle^2
+  + \frac{I_0(\vec{r},\theta)I_0(\vec{r},-\theta)}{8}
+  \\
+  + \frac{I_0(\vec{r},\theta)}{8} \left(
+    \Phi^\ast(\vec{r},\theta) \hat{\varphi}(\vec{r},\theta)
+    +\text{H.c.}
+    +\hat{\varphi}^\dagger(\vec{r},\theta) \hat{\varphi}^{}(\vec{r},\theta)
+  \right)
+  \\
+  +  \ldots \{\theta \to -\theta\} \ldots
+  \\
+  +
+  \frac{1}{8} \biggl(
+    \Phi^\ast(\vec{r},\theta) \Phi^\ast(\vec{r},-\theta)
+    \hat{\varphi}(\vec{r},\theta)\hat{\varphi}(\vec{r},-\theta)
+    \\+
+    \Phi(\vec{r},\theta) \Phi^\ast(\vec{r},-\theta)
+    \hat{\varphi}^\dagger(\vec{r},\theta)\hat{\varphi}(\vec{r},-\theta)
+    + \text{H.c.} \biggr)
+\end{multline}
+
+To simplify further, we must restrict to an uniform field $\Phi$.
+Note that this means the pump spot, propagated to the position of the
+atoms, should be very broad, which means either a large or a small
+pump spot, depending where the atoms sit.  Note also that if one
+wanted to study Meissner physics, this is not the ideal situation, so
+that for Meissner physics, one should work with the full Hamiltonian
+in Eq.~(\ref{eq:17}).  We will also focus on the case $\theta=\pi/4$,
+at the centre of the cavity.  In this case, since $m+n$ is restricted
+to be even, we know that $e^{i2 \theta (m+n)}=\pm1$, and so
+$\varphi(\vec{r},-\theta)= \pm \varphi(\vec{r},\theta)$.  Since all
+terms involve products of such terms, we may ignore the $\theta$ 
+label in this case.
+\hl{N.B. The above seems wrong. Although each term in the sum
+has fixed parity this does not mean that $\varphi$ does. Hence
+it seems that what follows, ignoring the sign of $\theta$ is
+probably not correct.}
+
+If $\Phi$ is constant, we may ignore the constant gauge term $Q_M I_0$
+which can be cancelled by an uniform phase twist of the atoms.  We may
+also neglect the uniform potential terms.  Doing all this, we find the
+first quantised atomic Hamiltonian is:
+\begin{multline}
+  \hat{H}_{A,1Q} =
+  \frac{1}{2m^\ast}
+  \left(i \nabla - 
+    \frac{Q_M}{2} \hat{\vec{x}} 
+    \left(
+      \Phi^\ast \hat{\varphi}(\vec{r}) +\text{H.c.}
+    \right)
+  \right)^2
+  \\
+  \frac{Q_E}{2} 
+  \left(
+    \Phi^\ast \hat{\varphi}(\vec{r}) +\text{H.c.}
+    +
+    \hat{\varphi}^\dagger(\vec{r}) \hat{\varphi}(\vec{r})
+  \right)
+  \\- \frac{M^2}{4}
+  \left(I_0+ \Phi^\ast \hat{\varphi}(\vec{r}) +\text{H.c.}
+    + \hat{\varphi}^\dagger(\vec{r}) \hat{\varphi}(\vec{r})
+  \right)^2
+  \\
+  + \frac{1}{8}\left( \frac{Q_M^2}{2m} - M^2\right)
+  \biggl(
+    2 I_0\left( \Phi^\ast \hat{\varphi}(\vec{r}) +\text{H.c.} \right)
+    \\+
+    4 I_0 \hat{\varphi}^\dagger(\vec{r}) \hat{\varphi}(\vec{r})
+    +
+    \Phi_0^{\ast 2}\hat{\varphi}^2(\vec{r})
+    +
+    \Phi_0^{2}\hat{\varphi}^{\dagger 2}(\vec{r}) \hat{\varphi}(\vec{r})
+  \biggr).
+\end{multline}
+Other than the first term, the other parts linear in $\hat{\varphi}(\vec{r})$
+have the overall prefactor:
+\begin{displaymath}
+  \frac{Q_E}{2} - \frac{M^2 I_0}{2}
+  +\frac{1}{4}\left( \frac{Q_M^2}{2m} - M^2\right)I_0
+\end{displaymath}
+We may choose $Q_E$ such that this prefactor vanishes, in which case:
+\begin{multline}
+  \hat{H}_{A,1Q} =
+  \frac{1}{2m^\ast}
+  \left(i \nabla - 
+    \frac{Q_M}{2} \hat{\vec{x}} 
+    \left(
+      \Phi^\ast \hat{\varphi}(\vec{r}) +\text{H.c.}
+    \right)
+  \right)^2
+  \\
+  + \frac{1}{8}\left( \frac{Q_M^2}{2m} - 3M^2\right)
+  \left[ \Phi^{\ast} \hat{\varphi}(\vec{r})
+    + \Phi \hat{\varphi}^{\dagger}(\vec{r}) 
+  \right]^2
+\end{multline}
+Finally we may make a global phase twist on $\varphi$ so that $\Phi$
+becomes real, and then define ${Q}_{M,\text{eff}}= {Q_M} I_0$ and
+$M_\text{eff}^2=I_0q(3 M^2 - Q_M^2/2m)/2$. We may note that:
+\begin{displaymath}
+  3 M^2 - \frac{Q_M^2}{2m}=
+  \frac{(E_a-E_b)^2}{\Omega-4E_R} \left[
+    3
+    - 
+    \frac{E_R}{(\Omega-4E_R)} \right]
+\end{displaymath}
+and since $E_R \ll \Omega$, this seems to be positive. In terms of these we find:
+\begin{multline}
+  \label{eq:19}
+  H_{\text{eff}} 
+  =
+  \int d^2\vec{r} \Biggl\{
+  \hat{\psi}^\dagger(\vec{r})
+  \left[
+  \frac{  \left(i \nabla - 
+      {Q}_{M,\text{eff}}  \hat{\vec{A}}
+  \right)^2}{2m^\ast}
+- \hat{M}_\text{eff}^2 \hat{A}^2
+  \right]
+  \hat{\psi}^{}(\vec{r})
+  \\
+  +
+  \hat{\varphi}^\dagger(\vec{r},\theta)
+  \left[
+    \Delta_0  
+    + \frac{\omega}{2}\left(
+    - {\lho^2} \nabla^2
+    + \frac{r^2}{\lho^2} \right)
+    \right]
+  \hat{\varphi}(\vec{r},\theta)
+  \Biggr\}
+\end{multline}
+where $\hat{\vec{A}} = \vec{x} (\hat{\varphi}+
+\hat{\varphi}^\dagger)/2$.  Note that here we have written both
+cavity photon fluctuations and the atomic fields in real space.  Note
+also that the question of photon mass is more complex than might first
+appear:
+\begin{itemize}
+\item There are two ``mass'' terms; the detuning $\Delta_0$ which may
+  be tuned, and the atomic-density-dependent term, $M^2$.  Note also
+  that the latter is negative, this would seem to mean a possible
+  instability.
+\item Even if $M^2=\Delta_0=0$, the problem is not exactly the
+  Mawell-Higgs model, since the Hamiltonian for the photon field is
+  (a) not Lorentz invariant (i.e. it is non relativsitic) and (b) not
+  not gauge invariant, i.e. it does not depend only on
+  the curvature and time derivative of $\hat A$.
+\end{itemize}
+Although this model is perhaps not what one may ideally want, it does
+prompty some interesting questions:
+\begin{itemize}
+\item Does the presence of the negative ``mass'' term, $-M^2$ 
+  favour an ``anti-Meissner'' effect, i.e. will the system
+  start spontaneously creating magnetic field and vortices?
+\item Does the more general case (with non-uniform pump profile)
+  show Meissner or anti-Meissner effects.
+\end{itemize}
+To answer these, it may be sufficient to simulate either
+Eq.~(\ref{eq:19}) or Eq.~(\ref{eq:17}), noting that there is also
+cavity photon loss.
+
+\subsection{Lattice gauge fields}
+\label{sec:lattice-gauge-fields}
+
+Looking at the proposals for realising synthetic fields for atoms, there
+exist three broad classes of things we can think to do:
+\begin{enumerate}
+\item Use a free space atomic cloud, with Raman beams, and have the
+  cavity light field cause a shift of detuning for the two-photon
+  Raman process.
+\item Consider adapting one of the lattice gauge theory schemes, in
+  which the gauge field arises by introducing a phase on the hopping
+  matrix elements, where the phase accumulates along one lattice
+  direction.
+\item Use a free space atomic cloud, and have a Raman process involving
+  the cavity as one leg.
+\end{enumerate}
+The first of these is done above, we next consider the other two schesms
+
+
+\subsubsection{Synthetic dimensions}
+\label{sec:synthetic-dimensions}
+
+
+
+The basic idea of the third scheme would be to consider ``synthetic
+fields in synthetic dimension'', i.e.
+\begin{multline}
+  H = \int dx \biggl\{\sum_\sigma
+  \psi^\dagger_\sigma \left[
+    - \frac{\partial_x^2}{2m}
+    - V_0 \cos^2(k_L x)
+    - E \hat{I}(x) 
+  \right] \psi^{}_\sigma
+  \\
+  + \Omega \left(\psi^\dagger_a \psi^{}_b e^{i k_R x} + \text{H.c.} \right)
+  \biggr\}.
+\end{multline}
+Here we have added a cavity light shift to an external lattice for the
+atoms.  The normal synthetic field/dimensions story is that the atoms
+sit in a deep lattice, with a standard hopping $J$ along the lattice.
+The Raman pulse causing conversion between species is a travelling
+wave, and so there is a phase factor that depends on the relative
+values of $k_L$ and $k_R$.  The idea of adding the cavity light field
+is that it will displace atoms in the lattice, and thus change these
+phase shifts.
+
+The geometry for this is that there would be a one-dimensional lattice
+orthogonal to the cavity axis, so that the cavity field intensity
+varies along the lattice.  Then, the RAman beams should at angles such
+that the net momentum transfer is at an angle to the lattice. The
+net result will be of the form of a two leg ladder:
+\begin{displaymath}
+  H_{\text{eff}} = 
+  -\sum_n \left( 
+    J^{\text{synth}}_n \psi^\dagger_{n,a} \psi^{}_{n,b} 
+    +
+    J\sum_\sigma \psi^\dagger_{n,\sigma} \psi^{}_{n+1,\sigma}
+    + \text{H.c.} \right)
+\end{displaymath}
+with a site dependent synthetic dimension hopping $J^{\text{synth}}_n$
+discussed next.
+
+If one finds the displacement of the atom from it's previous
+location $x_n = n \pi/k_L$, one finds:
+\begin{displaymath}
+  \delta x_n = \frac{E}{2 V_0 k_L^2} \left. \frac{d}{dx} I(x)\right|_{x=x_n}.
+\end{displaymath}
+The hopping does then have  the desired form:
+\begin{displaymath}
+  J^{\text{synth}}_n
+  =
+  \Omega e^{i\pi+i \gamma n + i a(n)}
+\end{displaymath}
+where $\gamma=\pi k_R/k_L$ corresponds to an externally imposed field
+and $a(n) = k_R \delta x_n$ is the dynamic part.  Unfortunately the
+coupling to the derivative of the light intensity seems to complicate
+things.  The best one might hope for is to consider $\hat{I}(x)
+=(\hat\varphi^\dagger + \Phi^\ast) (\hat\varphi + \Phi)$ as before,
+but now rather than an uniform background $\Phi(x)$, choose $\Phi(x) =
+\eta x$.  This then gives:
+\begin{displaymath}
+  \frac{d I}{dx} = 2 \eta^2 x
+  + \eta ( \hat\varphi^\dagger +\hat\varphi)
+  + \eta x
+  \frac{d }{dx} ( \hat\varphi^\dagger +\hat\varphi) + \text{H.o.t}.
+\end{displaymath}
+The first term is no problem, it just shifts the ``external'' field
+$\gamma \mapsto \gamma(1 + \eta^2 E/ V_0^2 k_L^2)$.  If there were
+some reason to neglect the third term in contrast to the second term,
+then we would have an intersting problem, with a dynamic Peirls
+substitution.  However, I see no reason why this should
+be the case.
+
+\subsubsection{Cavity as Raman leg}
+\label{sec:cavity-as-raman}
+
+Suppose we consider a lattice imposed by beams perpendicular to the
+cavity axis, and consider a lattice in one direction with alternating
+high-low-high minima.  i.e. this is the second standard scheme for
+realising a lattice gauge field: hopping in the crenelated direction
+occurs via a Raman process, involving two beams (typically
+co-propagating with the optical lattice.  The phase difference between
+these beams at a given lattice site corresponds to the phase
+accumulation on hopping.
+
+Each site in this lattice will then see a different intensity, and
+potentially a different phase, of the cavity light field.  The phase
+profile is possible if we have a superposition of different cavity
+modes, with incommensurate relative phases: the phase of the overall
+field depends on the relative amplitudes of the different components
+so can vary continuously, this potentially allows for a dynamica
+gauge field for hopping.
+
+We consider this problem written 
+\begin{multline}
+  \label{eq:20}
+  H_0=\sum_{i,j} \left[
+    \epsilon_A \psi^\dagger_{A,ij} \psi^{}_{A,ij}
+    +
+    \epsilon_B \psi^\dagger_{B,ij} \psi^{}_{B,ij}
+  \right]
+  \\  
+  - \!\!\!\! \sum_{\sigma \in A,B,ij} \!\!
+  J \left[
+    \psi^\dagger_{\sigma,ij} 
+    \left(\psi^{}_{\sigma,i(j+1)} + \psi^{}_{\sigma,i(j+1)}\right)
+    +
+    \text{H.c.}
+  \right]
+\end{multline}
+where $A,B$ are the different sub lattices, and $ij$ labels
+a unit cell, with two sites per cell. We then add:
+\begin{multline}
+  \label{eq:21}
+  H_{\text{Raman}} =
+  \frac{g\Omega}{\Delta}
+  \sum_{ij} \Bigl[
+    e^{-i\vec{k}_R \vec{r}_{ij}} \varphi^\dagger(\vec{r}_{ij},z) 
+    \psi^\dagger_{B,ij} \psi^{}_{A,ij} 
+    \\+
+    e^{i\vec{k}_R (\vec{r}_{ij} + \vec{r}_{AB})} \varphi^{}(\vec{r}_{ij}+\vec{r}_{AB},z) 
+    \psi^\dagger_{A,(i+1)j} \psi^{}_{B,ij} 
+    + \text{H.c.}
+  \Bigr]
+\end{multline}
+where $\vec{k}_R$ is one (external) leg of the Raman transition, and
+$\varphi$ is a cavity field, with (as yet) no integral over the cavity
+axis profile.  The term $\vec{r}_{AB}$ is the vector between the two
+sites per cell.
+
+Overall one should write $H=H_0 + H_{\text{Raman}} +H_{\text{cavity}}$.
+
+Some comments:
+\begin{itemize}
+\item The fact that this involves single cavity fields means the
+  cavity wavefunctions produce a non-trivial effect when one tries to
+  perform the $z$ integrals -- there may be selectivity requiring
+  antinodes of the standing wave along the cavity direction.
+\item An interesting extension of this is that the cavity can support
+  multiple families of quasi-degenerate modes.  Is it feasible to
+  consider a lattice such that the detuning between the two legs of
+  the Raman beam matches the splitting between two of these families?
+  This would allow a two-cavity-photon Raman transition, with the
+  cavity photons belonging to different nearly confocal
+  families.
+\end{itemize}
+
+One possibility is to detune from the central $B$ sites so as to
+realise a four-photon Raman transition between $A$ sites, in which
+case
+\begin{multline}
+  \label{eq:22}
+  H_{\text{4-photon-Raman}} \simeq
+  \frac{g^2\Omega^2}{\Delta^2 \delta}
+  \sum_{ij} \Biggl[
+    e^{i\vec{k}_R \vec{r}_{AB}} 
+    \varphi^\dagger(\vec{r}_{ij},z) 
+    \varphi^{}(\vec{r}_{ij}+\vec{r}_{AB},z) 
+    \\\psi^\dagger_{A,(i+1)j} \psi^{}_{A,ij} 
+    + \text{H.c.}\Biggr],
+\end{multline}
+where $\delta$ is the detuning of the 2-photon Raman from the $B$
+state.  Of course, as with all four-photon Raman processes, the above
+is not strictly correct, but is probably the dominant contribution, as
+other orderings of the four beams give larger detunings.  Such an
+expression allows a simple integral over $z$.  However, there may be a
+correction due to the mismatched transverse locations.  It The size of
+magnetic field acheivable then depends on the possible phase
+accumulation per lattice site, and without next adding the kind of
+meron-flux-lattice approach, it may not allow a large enough field to
+be significant.
+
+
+\section{BCS problems}
+\label{sec:bcs-problems}
+
+This problem records some thoughts about how the above might be applied to BCS
+physics.
+
+We can engineer an interaction $U_q$ between different atoms, roughly
+producing $\hat{H}_{\text{int}} = \sum_{k,k^\prime,q} U_q
+{\hat{c}}^{\dagger}_{k+q,\sigma}
+{\hat{c}}^{\dagger}_{k^\prime-q,\sigma^\prime}
+{\hat{c}}^{}_{k^\prime,\sigma^\prime} {\hat{c}}^{}_{k,\sigma}$.  This
+interaction can be attractive, and can be contact-like if one is near
+the ends the cavities.  This suggests that one can use this in a
+fermionic system to engineer a BCS superconductor.  It would be useful
+to consider this, incorporating the effects of cavity loss.  This allows one
+to answer:
+\begin{itemize}
+\item What plays the role of the Debye frequency --- when do we get something
+  associated with finesse, and when do we get the result that the energy
+  scale is the chemical potential?
+\item How does the cavity damping enter this calculation?
+\item If the interaction is not local, how does superconductivity
+  compete with CDW instabilities?
+\end{itemize}
+
+A natural way to ask this question would be to explore the pairing
+susceptibility, i.e. to calculate the T-matrix in the pairing channel,
+accounting for interaction via the (damped,dynamical) photon field.
+
+Beyond this, we can ask:
+\begin{itemize}
+\item Can we engineer spin dependent interactions, and can we use this to
+  favour particular pairing channels?
+\item Nothing in the above scheme relies on the specific spin labels
+  amongst atoms.  Thus, if one can avoid problems of dipolar relaxation
+  (i.e. use atoms with multiple levels distinguished by nuclear, not
+  electronic spin states), then one can presumably engineer color
+  superfluidity.
+\end{itemize}
+
+\section{Other questions}
+\label{sec:other-questions}
+
+\begin{itemize}
+\item The confocal cavity corresponds to $\Delta \psi = \pi/2$ between
+  the two mirrors, and consequently has degeneracy of all modes with
+  $n+m \bmod 2$ equal.  We could also consider placing the mirrors
+  closer, such that $\Delta \psi=  \pi/N$ in which case degeneracy
+  occurs for $n+m\bmod N$ equal.  Is this interesting?
+\item All of this set of notes focusses on longitudinal pumping, and
+  the scattering between modes:  do phenomena like
+  BCS etc. change if one goes to transverse pumping?
+\end{itemize}
+
+\appendix
+
+\section{Gaussian optics crib notes}
+\label{sec:gaussian-optics-crib}
+From Siegmann, the complex beam propagation function $\tilde{q}(z)$
+obeys
+\begin{displaymath}
+  \frac{1}{\tilde{q}{z}} = \frac{1}{R(z)} - \frac{2 i}{k w(z)^2}
+\end{displaymath}
+and $\tilde{q}(z) = z + i z_R$ (possibly with a real shift).  This gives
+\begin{displaymath}
+  R(z) = z + \frac{z_R^2}{z}, \quad
+  w(z) = w_0 \sqrt{ 1 + \frac{z^2}{z_R^2}}
+\end{displaymath}
+where $z_R = k w_0^2/2$, or equivalently, $w_0 =\sqrt{\lambda
+  z_R/\pi}$.  For the symmetric confocal cavity, we have mirrors with
+radius of curvature $\pm 2 z_R$ placed at $z=\pm z_R$.  
+
+The Guoy phase is given in general by 
+\begin{displaymath}
+  \tan(\psi(z)) = \frac{k w(z)^2}{2R(z)}
+\end{displaymath}
+or, more usefully, $\psi(z) = \arctan(z/z_R)$.  In the confocal
+case, it thus runs between $\pm \pi/4$.
+
+If we consider the general $z$ dependent standing wave:
+\begin{displaymath}
+  \cos\left[ k \left( z + \frac{r^2}{2R(z)} \right)
+    - (m+n+1) \psi(z) + \xi_{m,n,q} \right],
+\end{displaymath}
+then boundary conditions impose that this argument must be $\pi/2$ at
+one end of the cavity, and $(q+1/2) \pi$ at the other --- i.e. there
+must be $q$ multiples of $2\pi$ in a complete round trip.  This gives
+the conditions:
+\begin{displaymath}
+  \xi = \frac{\pi}{2}(q+1), \quad
+  2kz_0 = \frac{\pi}{2} \left[ 2q + (m+n+1) \frac{4\psi(z_0)}{\pi} \right].
+\end{displaymath}
+For the confocal case, families of degenerate modes obey
+$2q + m + n = 2 q_0$, where the label $q_0$ of the fundemental
+mode is related to the wavevector by
+$\omega = c k = c\pi (2q_0 +1) / 4 z_0$.  In this case we may then label
+$\xi_{m,n,q} = \xi_{m,n,q_0} = \xi_{q_0} - (m+n)\pi/4$.  It is therefore
+convenient to write the mode as:
+\begin{displaymath}
+  \cos\left[ k \left( z + \frac{r^2}{2R(z)} \right)
+    + \xi_{q_0} - \psi(z)
+    - (m+n) \left( \frac{\pi}{4} + \psi(z) \right)
+  \right],
+\end{displaymath}
+which identifies clearly that the $m,n$ phase dependence involves the
+combination $\psi(z) + \pi/4$, and so goes between $0$ and $\pi/2$.
+
+
+
+\section{Old thoughts about synthetic gauges}
+
+%%%%%%%%%%%%%%5
+The basic features of the setup are as follows:
+\begin{itemize}
+\item We consider a 2D pancake of atoms, in the plane perpendicular to
+  the cavity axis.
+\item Two lasers set up a gauge field potential across this, using 
+  the Spielman two-level system scheme.
+\item In this case, the vector potential has a magnitude that depends on
+  detuning of the Raman beam, and magnetic field depends on gradients of this.
+\item We then consider longitudinal pumping of the cavity.  This will
+  in general produce a stark shift with a spatially varying intensity.
+  If the light causes differential stark shift between the two
+  hyperfine states, then this gives a spatially varying detuning, and thus
+  a magnetic field.
+\item The magnetic field is thus set by the gradient of the light intensity
+  in the cavity.  If the atoms can re-arrange so as to make the light intensity
+  profile flat, then there is no magnetic field.
+\item The magnetic field would induce a vortex flow pattern of atoms,
+  as in the standard scheme.
+\item Thus, meissner physics occurs if the superfluid atoms can avoid
+  forming a vortex lattice by modifying the dielectric properties of
+  the cavity such that the light intensity profile is flat.
+\item The vortex lattice phase (assuming a type 2 superconductor) would
+  have some flux penetration (some gradient) and this would correlate
+  to vortex patterns.
+\item The fact that longitudinal pumping breaks symmetry is not an
+  issue; the Meissner physics problem in fact requires that one impose
+  a term $\vec{H}_{0}\cdot\vec{B}$, which breaks the symmetry of the
+  magnetic field.  The crucial point is not symmetry, but that the
+  spatial pattern of $\vec{B}$ can respond.  Thus, in the cQED
+  language, the crucial point is not that pumping should not break
+  symmetry, it is that the light pattern in the cavity should be able
+  to adapt as preferred by the atoms.
+
+\end{itemize}
+\end{document}

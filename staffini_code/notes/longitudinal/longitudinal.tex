@@ -1,0 +1,770 @@
+\documentclass[pra,twocolumn,superscriptaddress]{revtex4-1}
+\usepackage{amsmath,graphicx,hyperref}
+
+\newcommand{\vect}[1]{\mathbf{#1}}
+\newcommand{\tvr}{\tilde{\vect{r}}}
+\newcommand{\tvrp}{\tilde{\vect{r}}^\prime}
+\newcommand{\lho}{\ell}
+
+\newcommand{\light}{\lambda}
+\newcommand{\mode}{\lambda}
+\newcommand{\transverse}{u}
+
+\newcommand{\wf}{\phi}
+\newcommand{\wfz}{\Phi}
+
+\newcommand{\sym}{\mathcal{S}^\pm}
+\newcommand{\pumpwidth}{w_P}
+
+\usepackage{color,soul}
+
+\begin{document}
+
+\title{Cavity-mediated interactions in a longitudinally-pumped
+confocal }
+
+\author{M. Laura Staffini}
+\affiliation{SUPA, School of Physics and Astronomy, University of St Andrews, St Andrews, KY16 9SS, United Kingdom}
+\author{Benjamin Lev}
+\affiliation{Department of Applied Physics, Stanford University, Stanford CA 94305, USA}
+\affiliation{Department of Physics, Stanford University, Stanford CA 94305, USA}
+\affiliation{E. L. Ginzton Laboratory, Stanford University, Stanford CA 94305, USA}
+\author{Jonathan Keeling}
+\affiliation{SUPA, School of Physics and Astronomy, University of St Andrews, St Andrews, KY16 9SS, United Kingdom}
+
+\begin{abstract}
+  We show how the cavity-mediated interactions between atoms places in
+  a confocal cavity can be understood in terms of the Green's function
+  of an harmonic oscillator.  From this, we see clearly that for atoms
+  placed at the cavity center, transverse pattern formation for an
+  atomic BEC can only occur for blue detuned cavity light.  Away from
+  the trap center, numerical simulations are required; these show that
+  \ldots.  The connection to Green's functions shows clearly the
+  relation to Talbot pattern formation in free space, where the
+  standard Talbot effect corresponds to a free-space propagator. We
+  discuss the consequences for cavity-induced pairing with fermionic
+  atoms.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}
+\label{sec:introduction}
+
+
+% Why bother with controllable quantum systems. Why strong interactions
+In the past decade, an area has emerged at the interface of atomic,
+molecular, optical and condensed matter physics that seeks not to
+understand the properties of existing matter, but to engineer new
+states of matter.  i.e. rather than asking what theoretical model
+might explain the behavior seen in a given material, it asks what
+kinds of behavior are possible within our understanding of physics,
+and how these behaviors can be realized.  The exquisite control
+available in cold atom systems has been pivotal to many such examples,
+but despite this, realizing strongly interacting phases has been
+challenging due to problems of heating and 3-body losses. 
+
+A method that has been particularly powerful across a range of
+physical systems is strong matter-light coupling, creating hybrid
+quasiparticles, allowing one to tune the dispersion of normal modes.
+This has been extensively studied for solid state systems coupled to
+light~\cite{Carusotto2013a}.  For cold atoms, until recently, most
+experiments have focused on strong coupling to single mode
+cavities~\cite{Brennecke2007}, where phenomena such as optomechanical
+oscillations~\cite{Brennecke:Opto}, and superradiant phase
+transitions~\cite{Black:SO,Baumann2010,Baumann2011} have been studied.
+While these experiments demonstrate the potential for matter-light
+coupling to realize paradigmatic models, there are limitations on what
+kinds of behavior can be realized with single mode cavities.  For
+this reason, some of us have recently developed a multimode (nearly
+confocal) cavity, in which a BEC of atoms can be trapped so as to
+realize strong coupling between the cavity modes and the
+atoms~\cite{Kollar2014}.  
+
+
+In the single mode cavity, the cavity can be understood as mediating a
+long range (all-to-all) interaction between the atoms. As a result, a
+BEC of atoms in a single mode cavity can be used to realize
+paradigmatic models of quantum optics, such as the Dicke
+model~\cite{Dimer2007}.  Such models can be realized in various ways,
+involving either internal degrees of freedom of the
+atoms~\cite{Dimer2007,Baden2014}, or the center-of-mass motion of the
+atoms~\cite{Baumann2010,Nagy2010,Keeling2010}.  Similarly behavior is
+also possible for thermal
+atoms~\cite{Domokos2002,Black:SO,Piazza2013}, but such physics is
+always mean-field-like, due to the all-to-all coupling.  Multimode
+cavities escape this restriction.  As we discuss further below, they
+can provide strong cavity mediated interactions with a range
+controlled by the location of the atoms along the cavity axis, and the
+detuning of the cavity.
+
+Various aspects of optical and atomic physics in such cavities has
+already been discussed.  In particular, self organization and liquid
+crystalline order has been predicted for the degenerate cavity subject
+to a transverse pump
+beam~\cite{Gopalakrishnan2009,Gopalakrishnan2010}, and the effect of
+the atom cloud on the normal modes of the cavity has been
+explored~\cite{Wickenbrock2013a}.  Probing such normal modes involves
+studying transmission of a weak optical field through the cavity
+mirrors.  If such a probe field is not weak, the possibility arises of
+self-structuring of the atom cloud, as has been seen experimentally
+for thermal atoms in a retro-reflected standing wave of light (the
+Talbot effect)~\cite{Diver2014,Labeyrie2014}, and predicted
+theoretically for a BEC~\cite{Robb2015}.  The aim of this paper is to
+elucidate the connections between such Talbot physics, cavity mediated
+interactions, and transverse pattern formation for a BEC in a nearly
+confocal cavity.
+
+
+The remainder of this paper is organized as follows
+
+\section{Model}
+\label{sec:model}
+
+In this section we derive the equations governing the light
+field and atoms, for longitudinal pumping in a confocal (or
+near-confocal) configuration.
+% Outline the scheme
+
+\begin{figure}[htpb]
+  \centering
+  \includegraphics[width=3.2in]{fig1}
+  \caption{(a) Cartoon of a confocal cavity, illustrating the beam
+    waist profile (Red), the ray-tracing trajectory (black dashed
+    line), and placement of a pancake of cold atoms (blue). (b) Cavity
+    mediated interactions can be understood as a combination of terms
+    from the four times the ray-tracing profile intersects the cloud
+    of atoms.}
+  \label{fig:cartoon}
+\end{figure}
+
+As shown in Fig.~\ref{fig:cartoon} we consider a cavity formed by two
+mirrors, of identical curvature $R$, placed at $z=\pm z_M$. Inside
+this cavity, there is a cloud of atoms a distance $z_0$ from the
+center plane.
+
+\subsection{Modes of confocal cavities}
+\label{sec:modes-conf-cavit}
+
+% Introduction, what we do/don't say
+
+% Explain mode structure, restriction to near resonant family of q
+% given m,n
+
+Within the approximation of Gaussian optics\cite{Siegman1986a}, we may
+write the mode functions as $\mode_{mnq}(\vect{r},z) =
+\transverse_{mn}(\vect r,z) \cos(\zeta_{mnq}(z,r))$ labeled by two
+transverse indices $m,n$ and one longitudinal index $q$.  For now, the
+transverse mode profile $\transverse_{mn}(\vect r,z)$ is taken to be a
+suitably normalized Gauss-Hermite function (see
+Appendix~\ref{sec:prop-transv-mode}). The longitudinal phase then
+takes the form:
+\begin{displaymath}
+  \zeta_{mnq}(z,r)=
+  \frac{\omega_{mnq}}{c}\left( z + \frac{r^2}{2 R(z)} \right)
+  - (m+n+1) \psi(z) + \xi_{q} 
+\end{displaymath}
+Here the mode frequency $\omega_{mnq}$ must be found by matching
+boundary conditions at the mirrors, and $\psi(z) = \tan^{-1}(z/z_R)$
+is the Guoy phase, written in terms of the Rayleigh range $z_R$.  The
+Guoy phase term is required to ensure the converging transverse
+profile is balanced by a change of longitudinal
+wavevector~\cite{Siegman1986a}.  The Rayleigh range can be identified
+from the beam waist $w(z) = w_0 \sqrt{1 + (z/z_R)^2}$ and curvature
+$R(z) = z + z_R^2/z$.  For a symmetric cavity, with mirrors of radius
+of curvature $R_m$, one can thus write $z_R = \sqrt{z_M(R_M-z_M)}$.
+
+
+In order that the modefunction satisfies the boundary conditions we
+require that $\zeta_{mnq}(z=\mp z_M \pm r^2/R_M,r) = \pi(Q_\pm +
+1/2)$, where $R_M=R(z)$ is the radius of curvature of the mirrors.
+Such a condition on $\zeta_{mnq}$ means that the cosine term vanishes at
+both end points.  The longitudinal mode-index $q$ counts the
+difference between the indices $Q_\pm$.  This allows one to write:
+\begin{displaymath}
+  \xi_q=\frac{\pi}{2}(q+1), \quad
+  \omega_{mnq} = \frac{c \pi}{4 z_M} \left[
+    2 q + (m+n+1) \frac{4 \psi(z_M)}{\pi} \right].
+\end{displaymath}
+The behavior simplifies considerably when near confocal geometry,
+where $z_R=z_M=R_M/2$, and so $4 \psi(z_M)/\pi=1$.  This then means
+that if we choose integer $q$ such that $2q + (m+n+1) = 2 q_0 +1$, all
+modes $mnq$ satisfying this equation will have identical frequencies.
+i.e. this condition defines families of degenerate modes.  Since we
+will consider the case of a high Finesse cavity, we may restrict
+attention to a single degenerate mode family.  Thus we will suppress
+the $q$ label from hereon, as $q = q_0 - (m+n)/2$.    Note also that the argument continues to
+apply when slightly away from the confocal condition.  In this case
+however $\omega_{mn} = \omega_{00} + (c /z_M)[\psi(z_M) -
+\pi/4](m+n)$.
+
+\hl{Discuss cutoff of high order modes}
+
+Note that in the above, one may have $q_0$ either integer or half
+integer, corresponding to families of even (odd) parity modes.  This
+restriction (imposed by requiring integer $q$), means that when
+summing over mode families, the sum must be restricted to a given
+parity.  This can be done by inserting a factor
+\begin{math}
+  \sym_{mn} = ({1 \pm (-1)^{m+n}})/{2},
+\end{math}
+into the sum for the even(odd) families respectively.  Such a factor
+will be implicitly assumed in the following, by assuming the light
+field $\light(\vect{r}, z) =
+\sum_{mn} \alpha_{mn} \mode_{mn}(\vect{r},z)$ has non-zero coefficients
+$\alpha_{mn}$ for only the relevant parity of $m+n$.
+
+\subsection{Atom-mode couplings}
+\label{sec:atom-mode-couplings}
+
+% Atom properties
+Because of the varying Guoy phases of the different cavity modes, it
+is necessary to consider the interaction
+
+In order to illustrate the transverse pattern formation most cleanly,
+we consider a two-dimensional pancake of atoms, in the plane
+orthogonal to the cavity axis (see Fig.~\ref{fig:cartoon}.)  This
+corresponds to assuming that in the $z$ direction, there is a tight
+trap, so that the condensate wavefunction can be written in the form
+$\wfz(\vect r, z)=\wf(\vect r) Z(z)$.  We take the profile $Z(z)$ to
+be a Gaussian $Z(z) = \exp(-(z-z_0)^2/4 \sigma_z^2) /
+\sqrt[4]{2\pi\sigma_z^2}$, and we assume $\lambda \ll \sigma_z \ll
+z_R$.  As must be the case experimentally, we consider that the atoms
+experience also a (weaker) in-plane trap, $V_{\text{ext}}(r)$, even
+before the considering the cavity light.
+
+% Coupled equations
+
+The system is thus described by two coupled equations, a Schr\"odinger
+equation for the transverse atomic wavefunction $\wf(\vect r)$, and
+an equation for the cavity light field $\light(\vect{r}, z) =
+\sum_{mn} \alpha_{mn} \mode_{mn}(\vect{r},z)$, written in terms of mode
+coefficients $\alpha_{mn}$.  Writing the former in a frame eliminating
+the zero-point-energy of the longitudinal profile, and the latter in
+the rotating frame of the pump laser beam at frequency
+$\omega_{\text{Pump}}$, these coupled equations take the form:
+\begin{align}
+  \label{eq:1}
+  i \hbar \partial_t \wf(\vect r) &=
+  - \frac{\hbar^2 \nabla^2}{2m} \wf(r)
+  + V_{\text{ext}}(\vect{r}) \wf(r)
+  \nonumber\\&\qquad
+  - E_0 \int dz |Z(z)|^2 |\light(\vect{r},z)|^2  \wf(\vect r),
+  \\
+  \label{eq:3}
+  i \partial_t \alpha_{mn}
+  &= (-\Delta_{mn} -i \kappa) \alpha_{mn} 
+  +
+  f_{mn} 
+  \nonumber\\&
+  - E_0 \sum_{m^\prime n^\prime} 
+  \int d^2{\vect r}  |\wf(\vect{r})|^2 A_{mn,m^\prime n^\prime}(\vect r)
+  \alpha_{m^\prime n^\prime}.
+\end{align}
+Here $E_0$ is the light-shift per atom, i.e. the strength of the AC
+Stark shift, $E_0=g_0^2/\delta_a$, where $g_0$ is the dipole coupling
+to light, and $\delta_a=\omega_a-\omega_\text{Pump}$ the atom-pump
+detuning, which is assumed large and positive.  The source term
+$f_{mn}$ is the overlap of the pump beam with the mode $mn$.  We have
+also defined the detuning of the laser from mode $mn$,
+i.e. $\Delta_{mn} = \omega_{\text{Pump}} - \omega_{mn}$, so that red
+detuning corresponds to $\Delta_{mn} < 0$. We have also introduced:
+\begin{displaymath}
+  A_{mn,m^\prime n^\prime}(\vect r)
+  =
+  \int dz |Z(z)|^2
+  u^\ast_{mn}(\vect{r},z) u^{}_{m^\prime n^\prime}(\vect{r},z).
+\end{displaymath}
+This quantity, corresponding to mode overlaps with the longitudinal
+atomic density profile, also appears in Eq.~(\ref{eq:1}).  One may
+readily see that:
+\begin{multline}
+  \label{eq:2}
+  \int dz |Z(z)|^2 |\light(\vect{r},z)|^2
+  = \!\!\!\!\sum_{mnm^\prime n^\prime}\!\!\!
+  A_{mn,m^\prime n^\prime}(\vect r)
+  \alpha_{mn}^\ast
+  \alpha_{m^\prime n^\prime}.
+\end{multline}
+The function $A_{mn,m^\prime n^\prime}(\vect r)$ is thus crucial.  It
+fortunately has a simple form in the limit $ \lambda \ll \sigma_z \ll
+z_R$ which we consider. In this case one finds:
+\begin{multline}
+  \label{eq:4}
+  A_{mn,m^\prime n^\prime}(\vect r)
+  = \transverse_{mn}(\vect r,z_0)\transverse_{m^\prime n^\prime}(\vect r,z_0)
+  \\
+  \times
+  \frac{1}{2} \cos\left[\left(\frac{\pi}{4} + \psi(z_0)\right)
+    (m+n-m^\prime-n^\prime)
+  \right].
+\end{multline}
+Note that by assuming $\sigma_z \ll z_R$, it is valid to evaluate the
+transverse mode function at $z=z_0$, as done in the above expression.
+In the following it will be useful to define $\vartheta_0 = \pi/4 +
+\psi(z_0)$, and to note that rewriting the cosine as a sum of
+exponentials allows one to incorporate the effective selection rules
+imposed by this longitudinal integral via phase factors.  We will make
+particular use of this in the next section.
+
+\section{Weak interaction regime -- analytic results}
+\label{sec:weak-inter-regime}
+
+\subsection{Eliminating cavity modes}
+\label{sec:elim-cavity-modes}
+
+
+
+In order to gain a simple understanding of the behavior described by
+Eq.~(\ref{eq:1},\ref{eq:3}), we make use of analytic equations which
+can be derived in the limit of weak matter-light coupling.  This means
+considering the case $E_0 \ll |\omega_{mn} - \omega_{\text{Pump}} - i
+\kappa|$.% and $E_0 \ll \omega_{\text{trap}}$, where
+%$\omega_{\text{ext}}$ is the level spacing of the atoms in the trap
+%$V_\text{ext}(\vect r)$.
+Such a limit is tractable as we may solve Eq.~(\ref{eq:3}) perturbatively:
+\begin{displaymath}
+  \alpha_{mn} = \frac{f_{mn}}{\Delta_{mn}+i\kappa}
+  - E_0 \sum_{m^\prime n^\prime}
+  \int d^2{\vect r} \frac{ A_{mn,m^\prime n^\prime}(\vect r) |\wf(\vect r)|^2
+    f_{m^\prime n^\prime}}{%
+    (\Delta_{mn}+i\kappa)(\Delta_{m^\prime n^\prime}+i\kappa)}.
+\end{displaymath}
+This can then be inserted into Eq.~(\ref{eq:1}), leading to an equation 
+of the form:
+\begin{multline}
+  i \hbar \partial_t \wf(\vect r) =
+  \biggl[- \frac{\hbar^2 \nabla^2}{2m} 
+    + V_{\text{ext}}(\vect{r})
+    + V_{\text{cav}}(\vect{r})  
+  \\+ \int d^2 {\vect r}^\prime
+  U_{\text{cav}}(\vect r, \vect r^\prime) |\wf(\vect r^\prime)|^2
+  \biggr]\wf(r),
+\end{multline}
+where $V_{\text{cav}}(\vect{r})$ and $U_{\text{cav}}(\vect r, \vect
+r^\prime)$ are the pump-induced trap and cavity-mediated interactions
+respectively.  
+
+In the confocal case, where $\Delta_{mn} \equiv \Delta$, we can find
+closed-form expressions for these terms, as the sum over modes reduces
+to a sum over the (complete) set of basis functions.  This allows one
+to write all quantities in terms of the two functions:
+\begin{align}
+  \label{eq:7}
+  K(\vect r, \vect r^\prime;\alpha)
+  &= \sum_{mn} \sym_{mn}
+  \transverse_{mn}(\vect r,z_0) \transverse_{mn}(\vect r^\prime,z_0)
+  e^{-\alpha(m+n)} \\
+  \label{eq:8}
+  F(\vect{r},\alpha)&= 
+  \sum_{mn} \sym_{mn} 
+  f_{mn}   \transverse_{mn}(\vect r, z_0) 
+  e^{-\alpha(m+n)}.
+\end{align}
+We have included the symmetry factor explicitly here, as these sums no
+longer involve the coefficients $\alpha_{mn}$, which have been
+eliminated.  The coefficient $\alpha$ will allow us to incorporate the
+phase factors $\vartheta_0$, as well as to provide a cutoff on the
+number of transverse modes included.
+
+The function $K(\vect r, \vect r^\prime; \alpha)$ has a simple
+interpretation, which will allow its evaluation below: it is related
+to propagator for an imaginary time $\alpha$.  The term $(-1)^{m+n}$
+in the symmetrization factor can be accounted for by noting
+that $u_{mn}(-\vect{r}) = (-1)^{m+n}u_{mn}(-\vect{r})$, so that one has:
+\begin{displaymath}
+  K(\vect r, \vect r^\prime; \alpha)
+  =
+  \frac{1}{2} \left[
+    K_0(\vect r,  \vect r^\prime; \alpha)
+    \pm
+    K_0(\vect r, - \vect r^\prime; \alpha)
+  \right],
+\end{displaymath}
+where $K_0(\vect r,  \vect r^\prime; \alpha)$ is the propagator without
+any symmetrization factor.  Explicitly:
+\begin{multline}
+  \label{eq:14}
+  K_0(\vect r,  \vect r^\prime; \alpha)
+  =
+  \frac{e^{\alpha}}{w(z_0)^2 \pi \sinh \alpha}
+  \\\times
+  \exp\left[
+    - 
+    \frac{1}{ w(z_0)^2}
+    \left(
+      \frac{|\vect{r}|^2 + |\vect{r}^{\prime}|^{2}}{ \tanh \alpha}
+      -
+       \frac{2 \vect{r} \cdot \vect{r}^\prime}{\sinh \alpha}
+      \right)
+  \right]
+\end{multline}
+
+
+As we will see below, the
+function $F(\vect{r},\alpha)$ can be written in terms of an integral of
+propagator $K(\vect r, \vect r^\prime;\alpha)$ over the pump
+shape. Before discussing this, let us first write the effective
+potential and interactions.  The potential takes the form:
+\begin{equation}\label{eq:9}
+  V_{\text{cav}}(\vect{r})   = \frac{-E_0}{2(\Delta^2+\kappa^2)}
+  |F(\vect r, \alpha_0-i\vartheta_0)|^2,
+\end{equation}
+where $\alpha_0$ is kept positive to provide a cutoff over high order
+modes.  The expression for the effective interaction is more complex,
+but as we will discuss, has a simple interpretation, and simple
+forms in relevant limits.  We may write
+\begin{multline}\label{eq:10}
+  U_{\text{cav}}(\vect r, \vect r^\prime) =
+  \frac{ \Delta E_0^2}{4 (\Delta^2+\kappa^2)^2} 
+  \times\\\Re\bigl[
+  F(\vect r; \alpha_0-i\vartheta_0)
+  F(\vect r^\prime; \alpha_0-i\vartheta_0)
+  K(\vect r,\vect r^\prime; \alpha_0+2i\vartheta_0)
+  \\+
+  F(\vect r; \alpha_0-i\vartheta_0)
+  F(\vect r^\prime; \alpha_0+i\vartheta_0)
+  K(\vect r,\vect r^\prime; \alpha_0)
+  \bigr],
+\end{multline}
+The simple interpretation of the above expression is illustrated in
+Fig.~\ref{fig:cartoon}(b); the interaction consists of four terms
+(incorporating the mirror-images discussed above). These four terms to
+the parts of the interaction after successive reflections off cavity
+mirrors.  (After four reflections, the pattern repeats for a confocal
+cavity).
+
+To evaluate the above expressions completely requires also finding an
+expression for $F(\vect{r}, \alpha)$.  As noted previously, this can
+be found by using the propagator $K(\vect r, \vect r^\prime;\alpha)$.
+This follows since the coefficients describing the pump profile can be
+written as:
+\begin{displaymath}
+  f_{mn} = \int d^2\vect r_M
+  f(\vect r_M)
+  \transverse(\vect r_M, z_M),
+\end{displaymath}
+where $f(\vect r_M)$ is the pump profile on the mirror.  The
+transverse mode profiles at positions $z_M$ and $z_0$ are related by
+$\transverse_{mn}(\vect{r}, z_M) = S \transverse_{mn}(S\vect{r}, z_0)$
+where $S = w(z_0)/w(z_M)$, so that one may write:
+\begin{equation}
+  \label{eq:11}
+  F(\vect{r},\alpha)
+  =
+  %&=
+  % S\int d^2\vect r_M
+  % f(\vect r_M)
+  % K(\vect r, S \vect r_M; \alpha)
+  % \nonumber\\&=
+  \int d^2\vect r^\prime
+  f\left(\frac{\vect r^\prime}{S}\right)
+  K(\vect r,  \vect r^\prime; \alpha).
+\end{equation}
+This then provides a set of closed-form expressions allowing one to
+evaluate the effective interactions.  This is as far as one can
+proceed in the general case.  We next turn to consider various
+relevant special limits of the above expressions.
+
+\subsection{Simple limits}
+\label{sec:symmetric-limit}
+
+In most cases we are interested in the behavior for a Gaussian pump
+spot.  Since this is symmetric under $\vect{r} \to - \vect{r}$, this
+means that for an even set of cavity modes we can use $K_0(\vect r,
+\vect r^\prime; \alpha)$ rather than $K(\vect r, \vect r^\prime;
+\alpha)$ in Eq.~(\ref{eq:11}).  If the resonant cavity modes are odd,
+the pump function $F(\vect r, \alpha)$ vanishes as it is incompatible
+with an even pump profile.  Assuming even modes from hereon, this
+means a Gaussian profile allows us to replace $F(\vect r,\alpha)\to
+F_{\text{G}}(\vect{r},\alpha)$ where:
+\begin{displaymath}
+  F_{\text{G}}(\vect{r},\alpha)
+  =
+  \frac{f_0}{\pi \pumpwidth^2}
+  \int d^2\vect r^\prime
+  \exp\left[- \frac{|\vect r^\prime|^2}{(S \pumpwidth)^2} \right]
+  K_0(\vect r,  \vect r^\prime; \alpha).
+\end{displaymath}
+This expression may be evaluated as:
+\begin{multline}
+  \label{eq:12}
+  F_{\text{G}}(\vect{r},\alpha)
+  =
+  \frac{f_0 e^\alpha}{\pi \left[
+      w(z_M)^2 \sinh \alpha +  \pumpwidth^2 \cosh \alpha\right]}
+  \times
+  \\
+  \exp\left[
+    - \frac{|\vect r|^2}{w(z_0)^2}
+    \left(
+      \frac{%
+        w(z_M)^2 \cosh \alpha +  \pumpwidth^2 \sinh\alpha}{%
+        w(z_M)^2 \sinh \alpha +  \pumpwidth^2 \cosh\alpha}
+    \right)\right].
+\end{multline}
+As should be obvious, the result is always a Gaussian profile, but it
+broadens and narrows according to the phase of the complex $\alpha$.
+The result simplifies in various limits.  For a mode-matched pump
+spot, $w_P=w(z_M)$ one can readily see that $F_G(\vect r,
+\alpha)=(f_0/\pi w_P^2) \exp(-|\vect r|^2/w(z_0)^2)$, independent of
+the coefficient $\alpha$.  This means that one may write
+\begin{multline}
+  \label{eq:17}
+  U_{\text{cav}}(\vect r, \vect r^\prime)
+  = 
+  U_0
+  \exp\left( - \frac{|\vect r|^2 + |\vect r^\prime|^2}{w(z_0)^2} \right)
+  \\\times\Re\bigl[K(\vect r, \vect r^\prime, \alpha_0+2i\vartheta_0)+
+    K(\vect r, \vect r^\prime, \alpha_0)\bigr],
+\end{multline}
+where
+\begin{equation}
+  \label{eq:16}
+  U_0 \equiv 
+  \frac{ \Delta E_0^2}{4 (\Delta^2+\kappa^2)^2} 
+  \left[\frac{f_0}{\pi \pumpwidth^2}\right]^2.
+\end{equation}
+
+An even simpler limit exists for a large pump spot size, but requires
+more work to elucidate.  In this case one has
+\begin{equation}
+  \label{eq:13}
+  F_{\text{G}}(\vect{r},\alpha)
+  =
+  \frac{f_0 e^\alpha}{\pi \pumpwidth^2 \cosh \alpha}
+  \exp\left[ - \frac{|\vect r|^2 \tanh \alpha}{w(z_0)^2}\right].
+\end{equation}
+We will consider this limit in combination with the case $\alpha_0 \to
+0$, corresponding to a cavity that confines many transverse modes.
+The limit of a small pump spot size is very similar (since a small
+spot on one mirror will lead to a large spot at the other mirror).  We
+discuss here only the large spot limit, the other limit is simply
+related.
+
+Because the pump spot, and thus $F(\vect r, \alpha)$ is symmetric
+under $\vect{r} \to -\vect{r}$, we may write the interaction as:
+$U_{\text{cav}}(\vect r, \vect r^\prime) = [U_{\text{cav},0}(\vect r,
+\vect r^\prime) + U_{\text{cav},0}(\vect r, -\vect r^\prime)]/2$ where
+$U_{\text{cav},0}(\vect r, \vect r^\prime)$ is defined as in
+Eq.~(\ref{eq:10}) but with $K(\vect r, \vect r^\prime; \alpha)$
+replaced by $K_0(\vect r, \vect r^\prime; \alpha)$.  We may then note the
+following:  In the limit $\alpha \to 0$, we have
+\begin{displaymath}
+  K_0(\vect r, \vect r^\prime; \alpha \to 0)
+  = \delta\left( \vect r - \vect r^\prime\right)
+\end{displaymath}
+The prefactor of this term in Eq.~(\ref{eq:10}) becomes
+$\left|F_G(\vect r, i \vartheta_0)\right|^2$, since the delta function
+means we only consider the case $\vect r = \vect r^\prime$.  One may
+ see that
+\begin{math}
+  \left|F_G(\vect r,  i \vartheta_0)\right|^2
+  =
+  \left[{f_0}/({\pi \pumpwidth^2 \cos(\vartheta_0)})\right]^2.
+\end{math}
+The other contribution to Eq.~(\ref{eq:10}) requires further work.  Writing
+the overall expression as:
+\begin{equation}
+  U_{\text{cav},0}(\vect r, \vect r^\prime)
+  = \frac{U_0}{\cos^2(\vartheta_0)} \left[
+    \delta(\vect r - \vect r^\prime) 
+    +
+    u(\vect r,\vect r^\prime;{\vartheta_0})
+  \right],
+\end{equation}
+where $U_0$ is given in Eq.~(\ref{eq:16}), we must evaluate the
+function $u(\vect r, \vect r^\prime;{\vartheta_0})$ coming from the
+product $F(\vect r; \alpha_0-i\vartheta_0) F(\vect r^\prime;
+\alpha_0-i\vartheta_0) K(\vect r,\vect r^\prime;
+\alpha_0+2i\vartheta_0)$.  This simplifies considerably using the
+identity $\tan(\vartheta) + \cot(2 \vartheta) = 1/\sin(2\vartheta)$,
+finally yielding:
+\begin{displaymath}
+  u(\vect r, \vect r^\prime;{\vartheta})
+  =
+  \frac{1}{\pi w(z_0)^2 \sin (2\vartheta)}
+  \sin\left[
+    \frac{|\vect r-\vect r^\prime|^2}{w(z_0)^2 \sin(2\vartheta)}
+  \right].
+\end{displaymath}
+
+The above shows that for the limit of large (or small) pump spot size,
+the interaction takes the form:
+\begin{multline}
+  \label{eq:18}
+  U_{\text{cav}}(\vect r, \vect r^\prime)
+  =
+  \frac{U_0}{\cos^2\vartheta_0}
+  \left[
+    \delta(\vect r - \vect r^\prime)
+    +
+    \sigma(\vect r - \vect r^\prime, \ell(z_0))
+    \right.\\\left.+
+    \delta(\vect r + \vect r^\prime)
+    +
+    \sigma(\vect r + \vect r^\prime, \ell(z_0))
+  \right]
+\end{multline}
+where $\sigma(\vect s, \ell) = \sin(|\vect s|^2/\ell^2) / (\pi
+\ell^2)$ and $\ell(z)^2 = w(z_0)^2 [z_R^2-z^2]/[z_R^2+z^2]$.  The four
+terms in Eq.~(\ref{eq:18}) can be directly identified with the the
+four processes sketched in Fig.~\ref{fig:cartoon} (although not in the
+same order).  The lengthscale $\ell(z)$ varies between zero at the
+cavity ends (in which case $\sigma(\vect s, \ell \to 0) = \delta(\vect
+s)$, and $\ell(0) = w(z_0)^2$, thus the lengthscale for pattern
+formation varies up to (but not exceeding) the minimum beam waist.
+
+
+If the cloud density is symmetric, so that $|\wf(-\vect r)|^2 =
+|\wf(\vect r)|^2$ then we may focus on the first line of
+Eq.~(\ref{eq:18}).  In this case, the momentum space representation is
+particularly revealing:
+\begin{align}
+  \tilde{U}^{\text{sym}}_{\text{cav}}(\vect q)
+  &\equiv
+  \int d^2 \vect s e^{i \vect q \cdot \vect k}
+  U^{\text{sym}}_{\text{cav}}(\vect r, \vect r + \vect s)
+  \nonumber\\&=
+  \frac{2U_0}{\cos^2\vartheta_0}
+  \left[1 + \cos\left( \frac{q^2 \ell(z_0)^2}{4} \right) \right].
+\end{align}
+This form has an immediate consequence: if we consider an uniform
+cloud, and perform linear stability analysis as discussed
+in~\cite{Robb2015}, it is clear that for $U_0>0$ (blue detuning),
+there is no modulational instability, while for $U_0 < 0$ (red
+detuning), all wavevectors are unstable, and the most unstable
+wavevectors are $q = \sqrt{2n\pi} 2/\ell(z_0)$, including $q=0$.
+
+
+In Refs.~\cite{Tesio2012,Labeyrie2014,Robb2015}, transverse pattern
+formation was discussed for atoms in a light profile created by a
+single retroreflected pump beam.  In that case, pattern formation was
+predicted for both red and blue detuning.  The relation between the
+results here, and those in the single mirror case is straightforward.
+The simplest statement is that whereas our expressions involve
+Eq.~(\ref{eq:14}), the Green's function of an harmonic oscillator, the
+equivalent single mirror expressions involve the free space Green's
+function.  As a consequence, reflection off a single mirror leads to
+an effective interaction $\propto \sigma(\vect r-\vect r, \ell)$,
+where $\ell$ depends on the distance from the atoms to the mirror.
+The presence of the cavity adds the other three terms, corresponding
+to subsequent reflections.  The Fourier transform of the term
+$\sigma(\vect s,\ell)$ is a cosine term, which can be either positive
+or negative, hence for either sign of $U_0$, pattern formation occurs.
+In our case, the contributions from all reflections must be included
+simultaneously, and the contribution of the effective contact
+interaction cancels the instability for blue detuning.
+
+\section{Strong interactions -- numerics}
+\label{sec:strong-interactions}
+
+% Change to consider Gauss-Laguerre mdoes, 
+
+% Linear stability equation, in terms of first order profile
+
+
+
+
+\section{Discussion and Conclusions}
+\label{sec:conclusions}
+
+In this paper so far we have focused on bosonic atoms
+
+
+\acknowledgments{We are very happy to acknowledge stimulating
+  discussions with ...  JK acknowledges financial support from EPSRC
+  program ``TOPNES'' (EP/I031014/1) and the Leverhulme Trust
+  (IAF-2014-025). MLS acknowledges financial support from EPSRC grant
+  (EP/M506631/1).  JK gratefully acknowledges hospitality from the
+  Department of Applied Physics at Stanford University where this work
+  was undertaken.}
+
+
+\appendix
+
+\section{Properties of transverse mode functions}
+\label{sec:prop-transv-mode}
+
+In terms of the beam waist $w(z)$, we can write the transverse
+function as:
+\begin{displaymath}
+  \transverse_{mn}(\vect r,z) = \frac{1}{{w(z)}}
+  \chi_m\left( \frac{\sqrt{2}x}{w(z)}\right)
+  \chi_n\left( \frac{\sqrt{2}y}{w(z)}\right),
+\end{displaymath}
+in terms of the dimensionless profiles
+\begin{displaymath}
+  \chi_{n}(x)=\sqrt[4]{\frac{2}{\pi}} \frac{1}{\sqrt{2^n n!}}
+    H_n(x) \exp(-x^2/2),
+\end{displaymath}
+where $H_n(x)$ is the (physicists-)Hermite polynomial.
+
+
+\section{Longitudinal pattern formation}
+\label{sec:long-patt-form}
+
+Equation~(\ref{eq:1}) implicitly assumes a weak cavity field limit, as
+it ignores atomic recoil in the cavity direction.  A relatively simple
+extension of the equations of motion can be made to include this
+physics, at least near the concocal point, by writing:
+\begin{displaymath}
+  \wf(\vect r,z) = \sum_l \wf_l(\vect r) 
+  {\mathcal{N}_l}\cos\left(2l\frac{\omega_{00}}{c} z \right) Z(z) .
+\end{displaymath}
+where $\mathcal{N}_0=1, \mathcal{N}_{l \neq 0}=\sqrt{2}$. This then
+leads to the coupled Schrodinger equations:
+\begin{multline}
+  \label{eq:6}
+  i \hbar \partial_t \wf_l(\vect r) =
+  \left[ - \frac{\hbar^2 \nabla^2}{2m} + V_{\text{ext}}(\vect{r})
+    + (2l)^2 \omega_r
+  \right] \wf_l(\vect r)
+  \\
+  - \frac{E_0}{2}\sum_{mn,m^\prime n^\prime}
+  \alpha_{mn}^\ast
+  \transverse_{mn}(\vect r, z_0) 
+  \alpha_{m^\prime n^\prime}
+  \transverse_{m^\prime n^\prime}(\vect r, z_0) 
+  \\\times  \biggl[ 
+  \mathcal{C}_\Delta \wf_l(\vect r)
+  +
+  \mathcal{C}_\Sigma
+  \sum_{\delta=\pm 1} 
+  \frac{\wf_{l + \delta}(\vect r)}{\mathcal{N}_l \mathcal{N}_{l + \delta}}
+  \biggr]
+\end{multline}
+where $\omega_R = k_r^2/2m$, with $k_r=\omega_{00}/2$ being the
+fundamental wavector of the cavity modes, and we have written
+$\mathcal{C}_{\Delta,\Sigma} = \cos[ \vartheta_0((m+n) \mp (m^\prime +
+n^\prime))]$.  The corresponding cavity mode equations (using the same
+notation) become:
+\begin{multline}
+  \label{eq:5}
+  i \partial_t \alpha_{mn}
+  = (-\Delta_{mn} -i \kappa) \alpha_{mn} 
+  +
+  f_{mn} 
+  \\
+  - \frac{E_0}{2} \sum_{m^\prime n^\prime} 
+  \int d^2{\vect r} 
+  \transverse_{mn}(\vect r,z)
+  \alpha_{m^\prime n^\prime}
+  \transverse_{m^\prime n^\prime}(\vect r,z_0)
+  \\
+  \times\sum_l 
+  \left[    \mathcal{C}_\Delta  |\wf_l(\vect{r})|^2
+  +
+  \mathcal{C}_\Sigma
+  \sum_{\delta=\pm 1} 
+  \frac{\wf^\ast_l(\vect r)\wf_{l+\delta}(\vect r)}{%
+    \mathcal{N}_l \mathcal{N}_{l + \delta}}
+  \right].
+\end{multline}
+Exploring these full equations allows one to explore longitudinal
+optomechanical oscillations, as explored in the single-mode
+cavity~\cite{Brennecke:Opto}.
+
+\bibliography{cavity-so}
+
+\end{document}

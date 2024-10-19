@@ -1,0 +1,171 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 10.3' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[      6404,        162]
+NotebookOptionsPosition[      5977,        144]
+NotebookOutlinePosition[      6317,        159]
+CellTagsIndexPosition[      6274,        156]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell["\<\
+SetDirectory[NotebookDirectory[]]
+filename=FileNames[\"*h5\"][[1]];\
+\>", "Input",
+ CellChangeTimes->{{3.695042462184214*^9, 3.69504251596812*^9}, {
+   3.695042671857164*^9, 3.695042698864381*^9}, {3.695042931041888*^9, 
+   3.695042936057774*^9}, {3.695043116221003*^9, 3.695043173955064*^9}, 
+   3.698056474771558*^9}],
+
+Cell["\<\
+t1 = Import[filename, {\"Datasets\", \"/1/t\"}];
+r1 = Import[filename, {\"Datasets\", \"/1/r\"}];
+imatom1 = Import[filename, {\"Datasets\", \"/1/imatom\"}];
+reatom1 = Import[filename, {\"Datasets\", \"/1/reatom\"}];
+imlight1 = Import[filename, {\"Datasets\", \"/1/imlight\"}];
+relight1 = Import[filename, {\"Datasets\", \"/1/relight\"}];
+modatomsq1 = Import[filename, {\"Datasets\", \"/1/modatom\"}];
+modlightsq1 = Import[filename, {\"Datasets\", \"/1/modlight\"}];
+relightint1 = Import[filename, {\"Datasets\", \"/1/relightint\"}];
+imlightint1 = Import[filename, {\"Datasets\", \"/1/imlightint\"}];
+ResetDirectory[];\
+\>", "Input",
+ CellChangeTimes->{{3.695042462184214*^9, 3.69504251596812*^9}, {
+   3.695042723599244*^9, 3.6950427840456743`*^9}, {3.702896542719779*^9, 
+   3.702896589982273*^9}, {3.7040937933324957`*^9, 3.7040938068991833`*^9}, {
+   3.704096441939454*^9, 3.704096475882163*^9}, 3.70409652803328*^9, {
+   3.704110361552229*^9, 3.704110364916101*^9}, {3.7047954241872*^9, 
+   3.704795425228545*^9}, {3.707135743893197*^9, 3.70713574606073*^9}}],
+
+Cell["\<\
+declaredVariables={\"t1\", \"r1\", \"imatom1\", \"reatom1\", \"imlight1\", \
+\"relight1\", \"modatomsq1\",\"modlightsq1\",\"relightint1\",\"imlightint1\"}
+tmax=Length[t1]
+rmax=Length[r1]
+{0,Last[r1]}\
+\>", "Input",
+ CellChangeTimes->{{3.695042462184214*^9, 3.69504251596812*^9}, {
+   3.69504279771739*^9, 3.695042799557159*^9}, 3.69504283924289*^9, 
+   3.702896549384684*^9, {3.702896615501788*^9, 3.702896622165391*^9}, 
+   3.702898581205442*^9, {3.704093813052062*^9, 3.704093853682187*^9}, {
+   3.704093945384262*^9, 3.7040939459993277`*^9}, {3.704096536024461*^9, 
+   3.704096539288715*^9}, {3.707135748653277*^9, 3.7071357533245296`*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"plotmax", "=", "100"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"plotint", "=", "20"}], ";"}]}], "Input",
+ CellChangeTimes->{{3.706528734059414*^9, 3.706528741635365*^9}, {
+  3.716188961878683*^9, 3.7161889620859118`*^9}, {3.7246691823057823`*^9, 
+  3.7246691826012897`*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"pairGridPlot", "[", 
+   RowBox[{"plot1_", ",", "plot2_"}], "]"}], ":=", "\[IndentingNewLine]", 
+  RowBox[{"Table", "[", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"ListPlot", "[", 
+       RowBox[{
+        RowBox[{"Flatten", "[", 
+         RowBox[{
+          RowBox[{"Table", "[", 
+           RowBox[{
+            RowBox[{"{", 
+             RowBox[{
+              RowBox[{"r1", "[", 
+               RowBox[{"[", "i", "]"}], "]"}], ",", 
+              RowBox[{"plot1", "[", 
+               RowBox[{"[", 
+                RowBox[{"t", ",", "i"}], "]"}], "]"}]}], " ", "}"}], " ", ",", 
+            RowBox[{"{", 
+             RowBox[{"i", ",", "1", ",", "rmax"}], "}"}]}], "]"}], ",", "0"}],
+          "]"}], ",", " ", 
+        RowBox[{"Joined", "\[Rule]", "True"}], ",", " ", 
+        RowBox[{"ImageSize", "\[Rule]", "300"}], ",", 
+        RowBox[{"PlotRange", "\[Rule]", "All"}], ",", 
+        RowBox[{"PlotLabel", "\[Rule]", 
+         RowBox[{"StringForm", "[", 
+          RowBox[{"\"\<t=`1`\>\"", ",", "t"}], "]"}]}]}], "]"}], ",", 
+      RowBox[{"ListPlot", "[", 
+       RowBox[{
+        RowBox[{"Flatten", "[", 
+         RowBox[{
+          RowBox[{"Table", "[", 
+           RowBox[{
+            RowBox[{"{", " ", 
+             RowBox[{
+              RowBox[{"r1", "[", 
+               RowBox[{"[", "i", "]"}], "]"}], " ", ",", 
+              RowBox[{"plot2", "[", 
+               RowBox[{"[", 
+                RowBox[{"t", ",", "i"}], "]"}], "]"}]}], "}"}], " ", ",", 
+            RowBox[{"{", 
+             RowBox[{"i", ",", "1", ",", "rmax"}], "}"}]}], "]"}], ",", "0"}],
+          "]"}], ",", 
+        RowBox[{"Joined", "\[Rule]", "True"}], ",", " ", 
+        RowBox[{"ImageSize", "\[Rule]", "300"}], ",", 
+        RowBox[{"PlotRange", "\[Rule]", "All"}], ",", 
+        RowBox[{"PlotStyle", "\[Rule]", "Red"}], ",", 
+        RowBox[{"PlotLabel", "\[Rule]", 
+         RowBox[{"StringForm", "[", 
+          RowBox[{"\"\<t=`1`\>\"", ",", "t"}], "]"}]}]}], "]"}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{"t", ",", "1", ",", "plotmax", ",", "plotint"}], "}"}]}], 
+   "]"}]}]], "Input",
+ CellChangeTimes->{{3.702898456646985*^9, 3.702898497320044*^9}, {
+   3.702898553829279*^9, 3.702898556388954*^9}, {3.704093867177861*^9, 
+   3.7040938988397093`*^9}, {3.704094035181801*^9, 3.704094037981328*^9}, {
+   3.7040941022042294`*^9, 3.7040941239065933`*^9}, {3.704094168417569*^9, 
+   3.704094277991712*^9}, {3.704096419155895*^9, 3.7040964207273397`*^9}, {
+   3.704109548440873*^9, 3.704109605111507*^9}, {3.704109717939743*^9, 
+   3.704109739515236*^9}, 3.704109776627095*^9, {3.704111402560679*^9, 
+   3.7041114076163073`*^9}, {3.70533145166635*^9, 3.7053314524341*^9}, 
+   3.707133688254052*^9, {3.7071357354696712`*^9, 3.7071357593804417`*^9}, {
+   3.724762960060461*^9, 3.724763051320712*^9}}],
+
+Cell[BoxData[
+ RowBox[{"pairGridPlot", "[", 
+  RowBox[{"modatomsq1", ",", "modlightsq1"}], "]"}]], "Input",
+ CellChangeTimes->{{3.724763021392414*^9, 3.724763034857025*^9}}]
+},
+WindowSize->{1053, 1148},
+WindowMargins->{{Automatic, -10}, {Automatic, -10}},
+FrontEndVersion->"10.3 for Linux x86 (64-bit) (October 9, 2015)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[558, 20, 329, 7, 50, "Input"],
+Cell[890, 29, 1073, 18, 212, "Input"],
+Cell[1966, 49, 653, 12, 86, "Input"],
+Cell[2622, 63, 322, 7, 55, "Input"],
+Cell[2947, 72, 2850, 65, 143, "Input"],
+Cell[5800, 139, 173, 3, 32, "Input"]
+}
+]
+*)
+
+(* End of internal cache information *)

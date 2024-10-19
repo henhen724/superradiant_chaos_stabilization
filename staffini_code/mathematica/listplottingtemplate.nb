@@ -1,0 +1,546 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 10.3' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[     20393,        537]
+NotebookOptionsPosition[     19199,        496]
+NotebookOutlinePosition[     19538,        511]
+CellTagsIndexPosition[     19495,        508]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell["\<\
+SetDirectory[NotebookDirectory[]]
+filename=FileNames[\"*h5\"][[1]];
+t1 = Import[filename, {\"Datasets\", \"/1/t\"}];
+x1 = Import[filename, {\"Datasets\", \"/1/x\"}];
+y1 = Import[filename, {\"Datasets\", \"/1/y\"}];
+imatom1 = Import[filename, {\"Datasets\", \"/1/imatom\"}];
+reatom1 = Import[filename, {\"Datasets\", \"/1/reatom\"}];
+imlight1 = Import[filename, {\"Datasets\", \"/1/imlight\"}];
+relight1 = Import[filename, {\"Datasets\", \"/1/relight\"}];
+modatomsq1 = Import[filename, {\"Datasets\", \"/1/modatom\"}];
+modlightsq1= Import[filename, {\"Datasets\", \"/1/modlight\"}];
+relightint1 = Import[filename, {\"Datasets\", \"/1/relightint\"}];
+imlightint1 = Import[filename, {\"Datasets\", \"/1/imlightint\"}];
+ResetDirectory[];\
+\>", "Input",
+ CellChangeTimes->{{3.695042462184214*^9, 3.69504251596812*^9}, {
+   3.695042671857164*^9, 3.695042698864381*^9}, {3.695042931041888*^9, 
+   3.695042936057774*^9}, {3.695043116221003*^9, 3.695043173955064*^9}, 
+   3.698056474771558*^9, 3.7053228353076763`*^9, {3.707135781820326*^9, 
+   3.70713578290035*^9}}],
+
+Cell[BoxData["\<\"/home/mls/Code/multimode-mls/fP=50_D0=-50_zA=0_epsilon=0_\
+modes=20_atoms=_64-grid\"\>"], "Output",
+ CellChangeTimes->{3.706528625070434*^9, 3.706528744272654*^9}]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{"(*", " ", 
+  RowBox[{
+   RowBox[{"Declare", " ", "variables"}], ",", " ", 
+   RowBox[{"max", " ", "variables"}]}], " ", "*)"}]], "Input",
+ CellChangeTimes->{{3.7053228765877113`*^9, 3.705322889257371*^9}}],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+declaredVariables={\"t1\", \"x1\", \"y1\", \"imatom1\", \"reatom1\", \
+\"imlight1\", \"relight1\", \
+\"modatomsq1\",\"modlightsq1\",\"relightint1\",\"imlightint1\"}
+tmax=Length[t1]
+ymax=Length[y1];
+xmax=Length[x1];
+xmid=xmax/2+1;
+{First[x1], Last[x1]}\
+\>", "Input",
+ CellChangeTimes->{{3.695042462184214*^9, 3.69504251596812*^9}, {
+   3.69504279771739*^9, 3.695042799557159*^9}, 3.69504283924289*^9, 
+   3.702896549384684*^9, {3.702896615501788*^9, 3.702896622165391*^9}, 
+   3.702898581205442*^9, {3.7053225050665903`*^9, 3.705322508322576*^9}, 
+   3.706528623077712*^9, {3.707135784500053*^9, 3.7071357862998962`*^9}, {
+   3.718706719418805*^9, 3.7187067255225897`*^9}}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{"\<\"t1\"\>", ",", "\<\"x1\"\>", ",", "\<\"y1\"\>", 
+   ",", "\<\"imatom1\"\>", ",", "\<\"reatom1\"\>", ",", "\<\"imlight1\"\>", 
+   ",", "\<\"relight1\"\>", ",", "\<\"modatom1\"\>", ",", "\<\"modlight1\"\>",
+    ",", "\<\"relightint1\"\>", ",", "\<\"imlightint1\"\>"}], "}"}]], "Output",\
+
+ CellChangeTimes->{3.7065286255437593`*^9, 3.706528744553591*^9}],
+
+Cell[BoxData["101"], "Output",
+ CellChangeTimes->{3.7065286255437593`*^9, 3.70652874455441*^9}],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   RowBox[{"-", "12.`"}], ",", "11.625`"}], "}"}]], "Output",
+ CellChangeTimes->{3.7065286255437593`*^9, 3.70652874455492*^9}]
+}, Closed]],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{"Abs", " ", "atomic", " ", "field", " ", "density", " ", "plot"}], 
+   " ", "*)"}], " "}]], "Input",
+ CellChangeTimes->{{3.705322891354697*^9, 3.7053229192084923`*^9}}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"plotmax", "=", "tmax"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"plotint", "=", "20"}], ";"}]}], "Input",
+ CellChangeTimes->{{3.706528734059414*^9, 3.706528741635365*^9}, {
+  3.716188961878683*^9, 3.7161889620859118`*^9}}],
+
+Cell[BoxData[
+ RowBox[{"(*", 
+  RowBox[{"Table", "[", 
+   RowBox[{
+    RowBox[{"ListDensityPlot", "[", 
+     RowBox[{
+      RowBox[{"Flatten", "[", 
+       RowBox[{
+        RowBox[{"Table", "[", 
+         RowBox[{
+          RowBox[{"{", " ", 
+           RowBox[{
+            RowBox[{"x1", "[", 
+             RowBox[{"[", "i", "]"}], "]"}], " ", ",", 
+            RowBox[{"y1", "[", 
+             RowBox[{"[", "j", "]"}], "]"}], ",", 
+            RowBox[{"modatomsq1", "[", 
+             RowBox[{"[", 
+              RowBox[{"t", ",", "i", ",", "j"}], "]"}], "]"}]}], "}"}], " ", 
+          ",", 
+          RowBox[{"{", 
+           RowBox[{"i", ",", "1", ",", "xmax"}], "}"}], ",", 
+          RowBox[{"{", 
+           RowBox[{"j", ",", "1", ",", "ymax"}], "}"}]}], "]"}], ",", "1"}], 
+       "]"}], ",", 
+      RowBox[{"PlotLabel", "\[Rule]", 
+       RowBox[{"StringForm", "[", 
+        RowBox[{"\"\<timestep=`1`,t=`2`\>\"", ",", "t", ",", 
+         RowBox[{"t1", "[", 
+          RowBox[{"[", "t", "]"}], "]"}]}], "]"}]}], ",", 
+      RowBox[{"PlotLegends", "\[Rule]", "Automatic"}]}], "]"}], ",", 
+    RowBox[{"{", 
+     RowBox[{"t", ",", "1", ",", "plotmax", ",", "plotint"}], "}"}]}], "]"}], 
+  "*)"}]], "Input",
+ CellChangeTimes->{{3.702898456646985*^9, 3.702898497320044*^9}, {
+   3.702898553829279*^9, 3.702898556388954*^9}, 3.706522791700279*^9, {
+   3.706528620206246*^9, 3.7065286203255873`*^9}, {3.706528727516087*^9, 
+   3.706528731108144*^9}, {3.707135788004127*^9, 3.707135788068102*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{"Abs", " ", "light", " ", "field", " ", "density", " ", "plot"}], 
+   " ", "*)"}], " "}]], "Input",
+ CellChangeTimes->{{3.705322904665821*^9, 3.705322909329299*^9}}],
+
+Cell[BoxData[
+ RowBox[{"(*", 
+  RowBox[{"Table", "[", 
+   RowBox[{
+    RowBox[{"ListDensityPlot", "[", 
+     RowBox[{
+      RowBox[{"Flatten", "[", 
+       RowBox[{
+        RowBox[{"Table", "[", 
+         RowBox[{
+          RowBox[{"{", " ", 
+           RowBox[{
+            RowBox[{"x1", "[", 
+             RowBox[{"[", "i", "]"}], "]"}], " ", ",", 
+            RowBox[{"y1", "[", 
+             RowBox[{"[", "j", "]"}], "]"}], ",", 
+            RowBox[{"modlightsq1", "[", 
+             RowBox[{"[", 
+              RowBox[{"t", ",", "i", ",", "j"}], "]"}], "]"}]}], "}"}], " ", 
+          ",", 
+          RowBox[{"{", 
+           RowBox[{"i", ",", "1", ",", "xmax"}], "}"}], ",", 
+          RowBox[{"{", 
+           RowBox[{"j", ",", "1", ",", "ymax"}], "}"}]}], "]"}], ",", "1"}], 
+       "]"}], ",", 
+      RowBox[{"PlotLabel", "\[Rule]", 
+       RowBox[{"StringForm", "[", 
+        RowBox[{"\"\<timestep=`1`,t=`2`\>\"", ",", "t", ",", 
+         RowBox[{"t1", "[", 
+          RowBox[{"[", "t", "]"}], "]"}]}], "]"}]}], ",", 
+      RowBox[{"PlotLegends", "\[Rule]", "Automatic"}]}], "]"}], ",", 
+    RowBox[{"{", 
+     RowBox[{"t", ",", "1", ",", "plotmax", ",", "plotint"}], "}"}]}], "]"}], 
+  "*)"}]], "Input",
+ CellChangeTimes->{{3.702898521300167*^9, 3.7028985438644342`*^9}, {
+   3.702898671941966*^9, 3.702898699564999*^9}, {3.70532253918687*^9, 
+   3.705322550401822*^9}, 3.706522227668779*^9, 3.706522444703065*^9, 
+   3.706522785309814*^9, {3.706528616678441*^9, 3.706528618598508*^9}, {
+   3.7065287205398817`*^9, 3.706528723986877*^9}, {3.707135789572009*^9, 
+   3.707135789691927*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Abs", " ", "integral", " ", "kernel", " ", "density", " ", "plot"}], " ", 
+   "*)"}], " "}]], "Input",
+ CellChangeTimes->{{3.705322923576563*^9, 3.705322940152298*^9}}],
+
+Cell[BoxData[
+ RowBox[{"(*", 
+  RowBox[{"Table", "[", 
+   RowBox[{
+    RowBox[{"ListDensityPlot", "[", 
+     RowBox[{
+      RowBox[{"Flatten", "[", 
+       RowBox[{
+        RowBox[{"Table", "[", 
+         RowBox[{
+          RowBox[{"{", " ", 
+           RowBox[{
+            RowBox[{"x1", "[", 
+             RowBox[{"[", "i", "]"}], "]"}], " ", ",", 
+            RowBox[{"y1", "[", 
+             RowBox[{"[", "j", "]"}], "]"}], ",", 
+            RowBox[{
+             RowBox[{"Abs", "[", 
+              RowBox[{
+               RowBox[{"relightint1", "[", 
+                RowBox[{"[", 
+                 RowBox[{"t", ",", "i", ",", "j"}], "]"}], "]"}], "+", 
+               RowBox[{"\[ImaginaryI]", " ", 
+                RowBox[{"imlightint1", "[", 
+                 RowBox[{"[", 
+                  RowBox[{"t", ",", "i", ",", "j"}], "]"}], "]"}]}]}], "]"}], 
+             "^", "2"}]}], "}"}], " ", ",", 
+          RowBox[{"{", 
+           RowBox[{"i", ",", "1", ",", "xmax"}], "}"}], ",", 
+          RowBox[{"{", 
+           RowBox[{"j", ",", "1", ",", "ymax"}], "}"}]}], "]"}], ",", "1"}], 
+       "]"}], ",", 
+      RowBox[{"PlotLabel", "\[Rule]", 
+       RowBox[{"StringForm", "[", 
+        RowBox[{"\"\<timestep=`1`,t=`2`\>\"", ",", "t", ",", 
+         RowBox[{"t1", "[", 
+          RowBox[{"[", "t", "]"}], "]"}]}], "]"}]}], ",", 
+      RowBox[{"PlotLegends", "\[Rule]", "Automatic"}]}], "]"}], ",", 
+    RowBox[{"{", 
+     RowBox[{"t", ",", "1", ",", "10", ",", "1"}], "}"}]}], "]"}], 
+  "*)"}]], "Input",
+ CellChangeTimes->{{3.702906913165276*^9, 3.702906923107381*^9}, {
+   3.705322564657713*^9, 3.705322565874906*^9}, 3.7065227719905043`*^9, {
+   3.706528608854786*^9, 3.7065286090551233`*^9}, {3.706528780170292*^9, 
+   3.706528780378696*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "1", "D", " ", "cut", " ", "plots", " ", "of", " ", "integral", " ", 
+    "kernel", " ", "at", " ", "time", " ", "T"}], " ", "*)"}], " "}]], "Input",\
+
+ CellChangeTimes->{{3.7053229685030947`*^9, 3.705322995798421*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   RowBox[{"grid", "[", 
+    RowBox[{"min_", ",", "max_"}], "]"}], ":=", 
+   RowBox[{"Table", "[", 
+    RowBox[{"j", ",", 
+     RowBox[{"{", 
+      RowBox[{"j", ",", "min", ",", "max", ",", "0.375"}], "}"}]}], "]"}]}], 
+  ";"}]], "Input",
+ CellChangeTimes->{{3.702909100915104*^9, 3.702909152903653*^9}, {
+   3.702909248478796*^9, 3.702909296340932*^9}, {3.702909370131575*^9, 
+   3.702909465336771*^9}, 3.7029094989360037`*^9, 3.706528794609476*^9}],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"T", "=", "2"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"(*", 
+   RowBox[{"GraphicsGrid", "[", 
+    RowBox[{"{", 
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"ListPlot", "[", 
+        RowBox[{
+         RowBox[{"Table", "[", 
+          RowBox[{
+           RowBox[{"{", " ", 
+            RowBox[{
+             RowBox[{"x1", "[", 
+              RowBox[{"[", "i", "]"}], "]"}], " ", ",", 
+             RowBox[{"relightint1", "[", 
+              RowBox[{"[", 
+               RowBox[{"T", ",", "i", ",", "1"}], "]"}], "]"}]}], "}"}], " ", 
+           ",", 
+           RowBox[{"{", 
+            RowBox[{"i", ",", "1", ",", "xmax"}], "}"}]}], "]"}], ",", 
+         RowBox[{"PlotRange", "\[Rule]", 
+          RowBox[{"{", 
+           RowBox[{
+            RowBox[{"{", 
+             RowBox[{
+              RowBox[{"-", "12"}], ",", "12"}], "}"}], ",", "Automatic"}], 
+           "}"}]}], ",", 
+         RowBox[{"Joined", "\[Rule]", "True"}], ",", 
+         RowBox[{"ImageSize", "\[Rule]", "500"}], ",", 
+         RowBox[{"GridLines", "\[Rule]", "grid"}]}], "]"}], ",", 
+       RowBox[{"ListPlot", "[", 
+        RowBox[{
+         RowBox[{"Table", "[", 
+          RowBox[{
+           RowBox[{"{", " ", 
+            RowBox[{
+             RowBox[{"x1", "[", 
+              RowBox[{"[", "i", "]"}], "]"}], " ", ",", 
+             RowBox[{"imlightint1", "[", 
+              RowBox[{"[", 
+               RowBox[{"T", ",", "i", ",", "1"}], "]"}], "]"}]}], "}"}], " ", 
+           ",", 
+           RowBox[{"{", 
+            RowBox[{"i", ",", "1", ",", "xmax"}], "}"}]}], "]"}], ",", 
+         RowBox[{"Joined", "\[Rule]", "True"}], ",", 
+         RowBox[{"PlotRange", "\[Rule]", 
+          RowBox[{"{", 
+           RowBox[{
+            RowBox[{"{", 
+             RowBox[{
+              RowBox[{"-", "12"}], ",", "12"}], "}"}], ",", "Automatic"}], 
+           "}"}]}], ",", 
+         RowBox[{"GridLines", "\[Rule]", "grid"}]}], "]"}], ",", 
+       RowBox[{"ListPlot", "[", 
+        RowBox[{
+         RowBox[{"Table", "[", 
+          RowBox[{
+           RowBox[{"{", " ", 
+            RowBox[{
+             RowBox[{"x1", "[", 
+              RowBox[{"[", "i", "]"}], "]"}], " ", ",", 
+             RowBox[{"Abs", "[", 
+              RowBox[{
+               RowBox[{"relightint1", "[", 
+                RowBox[{"[", 
+                 RowBox[{"T", ",", "i", ",", "1"}], "]"}], "]"}], "+", 
+               RowBox[{"\[ImaginaryI]", " ", 
+                RowBox[{"imlightint1", "[", 
+                 RowBox[{"[", 
+                  RowBox[{"T", ",", "i", ",", "1"}], "]"}], "]"}]}]}], 
+              "]"}]}], "}"}], " ", ",", 
+           RowBox[{"{", 
+            RowBox[{"i", ",", "1", ",", "xmax"}], "}"}]}], "]"}], ",", 
+         RowBox[{"PlotRange", "\[Rule]", 
+          RowBox[{"{", 
+           RowBox[{
+            RowBox[{"{", 
+             RowBox[{
+              RowBox[{"-", "12"}], ",", "12"}], "}"}], ",", "Automatic"}], 
+           "}"}]}], ",", 
+         RowBox[{"Joined", "\[Rule]", "True"}], ",", 
+         RowBox[{"ImageSize", "\[Rule]", "500"}], ",", 
+         RowBox[{"GridLines", "\[Rule]", "grid"}]}], "]"}]}], "}"}], "}"}], 
+    "]"}], "*)"}]}]}], "Input",
+ CellChangeTimes->{{3.702915256843791*^9, 3.702915277219438*^9}, {
+  3.70532258752915*^9, 3.7053225883450108`*^9}, {3.705322797060199*^9, 
+  3.70532280440352*^9}, {3.706528605367258*^9, 3.706528605590577*^9}, {
+  3.706528783658284*^9, 3.706528783881302*^9}}],
+
+Cell[CellGroupData[{
+
+Cell["1D plots", "Section",
+ CellChangeTimes->{{3.706522734181653*^9, 3.706522738621257*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{"Plotting", " ", "fn"}], " ", "*)"}], "\[IndentingNewLine]", 
+  RowBox[{
+   RowBox[{"pairGridPlot", "[", 
+    RowBox[{"plot1_", ",", "plot2_"}], "]"}], ":=", 
+   RowBox[{"Table", "[", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{"ListLinePlot", "[", 
+        RowBox[{
+         RowBox[{"Table", "[", 
+          RowBox[{
+           RowBox[{"{", " ", 
+            RowBox[{
+             RowBox[{"x1", "[", 
+              RowBox[{"[", "i", "]"}], "]"}], " ", ",", 
+             RowBox[{"plot1", "[", 
+              RowBox[{"[", 
+               RowBox[{"t", ",", "i", ",", "xmid"}], "]"}], "]"}]}], "}"}], 
+           " ", ",", 
+           RowBox[{"{", 
+            RowBox[{"i", ",", "1", ",", "xmax"}], "}"}]}], "]"}], ",", 
+         RowBox[{"ImageSize", "\[Rule]", "300"}], ",", 
+         RowBox[{"PlotLabel", "\[Rule]", 
+          RowBox[{"StringForm", "[", 
+           RowBox[{"\"\<timestep=`1`,t=`2`\>\"", ",", "t", ",", 
+            RowBox[{"t1", "[", 
+             RowBox[{"[", "t", "]"}], "]"}]}], "]"}]}], ",", 
+         RowBox[{"PlotLegends", "\[Rule]", "Automatic"}], ",", 
+         RowBox[{"PlotStyle", "\[Rule]", "Thick"}], ",", 
+         RowBox[{"PlotRange", "\[Rule]", "All"}]}], "]"}], ",", 
+       RowBox[{"ListLinePlot", "[", 
+        RowBox[{
+         RowBox[{"Table", "[", 
+          RowBox[{
+           RowBox[{"{", " ", 
+            RowBox[{
+             RowBox[{"x1", "[", 
+              RowBox[{"[", "i", "]"}], "]"}], ",", 
+             RowBox[{"plot2", "[", 
+              RowBox[{"[", 
+               RowBox[{"t", ",", "i", ",", "xmid"}], "]"}], "]"}]}], "}"}], 
+           " ", ",", 
+           RowBox[{"{", 
+            RowBox[{"i", ",", "1", ",", "xmax"}], "}"}]}], "]"}], ",", 
+         RowBox[{"ImageSize", "\[Rule]", "400"}], ",", 
+         RowBox[{"PlotLabel", "\[Rule]", 
+          RowBox[{"StringForm", "[", 
+           RowBox[{"\"\<timestep=`1`,t=`2`\>\"", ",", "t", ",", 
+            RowBox[{"t1", "[", 
+             RowBox[{"[", "t", "]"}], "]"}]}], "]"}]}], ",", 
+         RowBox[{"PlotStyle", "\[Rule]", 
+          RowBox[{"{", 
+           RowBox[{"Red", ",", "Thick"}], "}"}]}], ",", 
+         RowBox[{"PlotLegends", "\[Rule]", "Automatic"}], ",", 
+         RowBox[{"PlotRange", "\[Rule]", "All"}]}], "]"}]}], "}"}], ",", 
+     RowBox[{"{", 
+      RowBox[{"t", ",", "1", ",", "plotmax", ",", "plotint"}], "}"}]}], 
+    "]"}]}]}]], "Input",
+ CellChangeTimes->{{3.706522812653264*^9, 3.706522855147264*^9}, {
+   3.706523178019795*^9, 3.7065231786987762`*^9}, {3.706528630302046*^9, 
+   3.706528633973744*^9}, {3.7065287067091017`*^9, 3.706528710972693*^9}, {
+   3.707135799459653*^9, 3.707135799556534*^9}, 3.716639583158935*^9, {
+   3.716639701371339*^9, 3.7166397079198847`*^9}, {3.71870673247468*^9, 
+   3.718706735762559*^9}, {3.7246687245539293`*^9, 3.7246687945516148`*^9}, 
+   3.7246688924763412`*^9, {3.724668925018457*^9, 3.7246689312902603`*^9}, 
+   3.724669026344912*^9}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Abs", " ", "val", " ", "of", " ", "atomic", " ", "and", " ", "light", " ",
+     "field", " ", "by", " ", "time", " ", "step"}], " ", "*)"}], 
+  "\[IndentingNewLine]", 
+  RowBox[{"pairGridPlot", "[", 
+   RowBox[{"modatomsq1", ",", "modlightsq1"}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.706522812653264*^9, 3.706522855147264*^9}, {
+   3.706523178019795*^9, 3.7065231786987762`*^9}, {3.706528630302046*^9, 
+   3.706528633973744*^9}, {3.7065287067091017`*^9, 3.706528710972693*^9}, {
+   3.707135799459653*^9, 3.707135799556534*^9}, 3.716639583158935*^9, {
+   3.716639701371339*^9, 3.7166397079198847`*^9}, {3.71870673247468*^9, 
+   3.718706735762559*^9}, {3.724669037317993*^9, 3.724669059701457*^9}}],
+
+Cell[BoxData[
+ RowBox[{"(*", " ", 
+  RowBox[{
+  "Real", " ", "part", " ", "of", " ", "atomic", " ", "and", " ", "light", 
+   " ", "field", " ", "by", " ", "time", " ", "step"}], " ", "*)"}]], "Input",\
+
+ CellChangeTimes->{{3.7166396859309998`*^9, 3.716639697792458*^9}}],
+
+Cell[BoxData[
+ RowBox[{"pairGridPlot", "[", 
+  RowBox[{"reatom1", ",", "relight1"}], "]"}]], "Input",
+ CellChangeTimes->{{3.7065224933076572`*^9, 3.706522549202477*^9}, {
+   3.706522593617509*^9, 3.706522610958962*^9}, {3.706522666792206*^9, 
+   3.706522720118046*^9}, {3.706523046446516*^9, 3.7065230949576902`*^9}, {
+   3.706523135669265*^9, 3.7065231362442617`*^9}, {3.706528648413306*^9, 
+   3.706528656165184*^9}, {3.7065286941250963`*^9, 3.706528698525358*^9}, {
+   3.707135800819682*^9, 3.707135800956172*^9}, 3.7166396745138617`*^9, {
+   3.7187067383069572`*^9, 3.7187067417642117`*^9}, {3.724669071429105*^9, 
+   3.724669104869732*^9}}],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"(*", " ", 
+   RowBox[{
+   "Im", " ", "part", " ", "of", " ", "atomic", " ", "and", " ", "light", " ",
+     "field", " ", "by", " ", "time", " ", "step"}], " ", "*)"}], 
+  "\[IndentingNewLine]", 
+  RowBox[{"pairGridPlot", "[", 
+   RowBox[{"imatom1", ",", "imlight1"}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.7065224933076572`*^9, 3.706522549202477*^9}, {
+   3.706522593617509*^9, 3.706522610958962*^9}, {3.706522666792206*^9, 
+   3.706522720118046*^9}, {3.706523046446516*^9, 3.7065230949576902`*^9}, {
+   3.706523135669265*^9, 3.7065231362442617`*^9}, {3.706528648413306*^9, 
+   3.706528656165184*^9}, {3.7065286941250963`*^9, 3.706528698525358*^9}, {
+   3.707135800819682*^9, 3.707135800956172*^9}, 3.7166396745138617`*^9, {
+   3.7187067383069572`*^9, 3.7187067417642117`*^9}, {3.724669071429105*^9, 
+   3.724669104869732*^9}}]
+}, Open  ]]
+},
+WindowSize->{1276, 1148},
+WindowMargins->{{Automatic, 26}, {Automatic, -10}},
+FrontEndVersion->"10.3 for Linux x86 (64-bit) (October 9, 2015)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[580, 22, 1068, 20, 266, "Input"],
+Cell[1651, 44, 181, 2, 32, "Output"]
+}, Open  ]],
+Cell[1847, 49, 229, 5, 32, "Input"],
+Cell[CellGroupData[{
+Cell[2101, 58, 683, 15, 122, "Input"],
+Cell[2787, 75, 395, 7, 32, "Output"],
+Cell[3185, 84, 95, 1, 32, "Output"],
+Cell[3283, 87, 166, 4, 32, "Output"]
+}, Closed]],
+Cell[3464, 94, 225, 5, 26, "Input"],
+Cell[3692, 101, 270, 6, 55, "Input"],
+Cell[3965, 109, 1499, 37, 55, "Input"],
+Cell[5467, 148, 222, 5, 32, "Input"],
+Cell[5692, 155, 1599, 39, 55, "Input"],
+Cell[7294, 196, 230, 6, 32, "Input"],
+Cell[7527, 204, 1753, 44, 77, "Input"],
+Cell[9283, 250, 280, 7, 32, "Input"],
+Cell[9566, 259, 485, 12, 32, "Input"],
+Cell[10054, 273, 3463, 90, 165, "Input"],
+Cell[CellGroupData[{
+Cell[13542, 367, 93, 1, 65, "Section"],
+Cell[13638, 370, 2991, 69, 165, "Input"],
+Cell[16632, 441, 762, 14, 55, "Input"],
+Cell[17397, 457, 270, 6, 32, "Input"],
+Cell[17670, 465, 645, 10, 32, "Input"],
+Cell[18318, 477, 865, 16, 55, "Input"]
+}, Open  ]]
+}
+]
+*)
+
+(* End of internal cache information *)

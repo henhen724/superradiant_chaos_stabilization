@@ -1,0 +1,94 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 10.3' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[      2707,         85]
+NotebookOptionsPosition[      2323,         68]
+NotebookOutlinePosition[      2661,         83]
+CellTagsIndexPosition[      2618,         80]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell["\<\
+SetDirectory[NotebookDirectory[]];
+filename=FileNames[\"*h5\"][[1]];\
+\>", "Input",
+ CellChangeTimes->{{3.695042462184214*^9, 3.69504251596812*^9}, {
+  3.695042671857164*^9, 3.695042698864381*^9}, {3.695042931041888*^9, 
+  3.695042936057774*^9}, {3.695043116221003*^9, 3.695043173955064*^9}}],
+
+Cell["\<\
+t1 = Import[filename, {\"Datasets\", \"/1/t\"}];
+x1 = Import[filename, {\"Datasets\", \"/1/x\"}];
+y1 = Import[filename, {\"Datasets\", \"/1/y\"}];
+imatom1 = Import[filename, {\"Datasets\", \"/1/imatom\"}];
+reatom1 = Import[filename, {\"Datasets\", \"/1/reatom\"}];
+imlight1 = Import[filename, {\"Datasets\", \"/1/imlight\"}];
+relight1 = Import[filename, {\"Datasets\", \"/1/relight\"}];
+modatom1 = Import[filename, {\"Datasets\", \"/1/modatom\"}];
+ResetDirectory[];\
+\>", "Input",
+ CellChangeTimes->{{3.695042462184214*^9, 3.69504251596812*^9}, {
+  3.695042723599244*^9, 3.6950427840456743`*^9}}],
+
+Cell["\<\
+
+declaredVariables={\"t1\", \"x1\", \"y1\", \"imatom1\", \"reatom1\", \
+\"imlight1\", \"relight1\", \"modatom1\"}
+tmax=Length[t1];
+ymax=Length[y1];
+xmax=Length[x1];
+{First[x1], Last[x1]}\
+\>", "Input",
+ CellChangeTimes->{{3.695042462184214*^9, 3.69504251596812*^9}, {
+   3.69504279771739*^9, 3.695042799557159*^9}, 3.69504283924289*^9}],
+
+Cell["\<\
+intTable=Table[Interpolation[Flatten[Table[{{ x1[[i]] ,y1[[j]] \
+},modatom1[[t,i,j]]} \
+,{i,1,xmax},{j,1,ymax}],1],InterpolationOrder->4],{t,1,tmax}];\
+\>", "Input",
+ CellChangeTimes->{{3.695042462184214*^9, 3.695042511328251*^9}}],
+
+Cell["\<\
+Table[DensityPlot[intTable[[T]][x,y],{x,-10,10},{y,-10,10},PlotRange->All],{T,\
+1,tmax,20}]\
+\>", "Input",
+ CellChangeTimes->{{3.695042462184214*^9, 3.695042507346031*^9}, 
+   3.695042891538909*^9, {3.695121482791641*^9, 3.695121493495256*^9}}]
+},
+WindowSize->{1275, 911},
+WindowMargins->{{Automatic, 34}, {-10, Automatic}},
+FrontEndVersion->"10.3 for Linux x86 (64-bit) (October 9, 2015)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[558, 20, 302, 6, 50, "Input"],
+Cell[863, 28, 606, 12, 176, "Input"],
+Cell[1472, 42, 346, 10, 122, "Input"],
+Cell[1821, 54, 241, 5, 32, "Input"],
+Cell[2065, 61, 254, 5, 32, "Input"]
+}
+]
+*)
+
+(* End of internal cache information *)

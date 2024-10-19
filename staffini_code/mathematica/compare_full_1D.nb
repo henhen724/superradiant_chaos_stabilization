@@ -1,0 +1,260 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 10.3' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[      8032,        251]
+NotebookOptionsPosition[      7679,        235]
+NotebookOutlinePosition[      8015,        250]
+CellTagsIndexPosition[      7972,        247]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[BoxData[{
+ RowBox[{"SetDirectory", "[", "]"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"filename1D", "=", 
+   RowBox[{
+    RowBox[{"FileNames", "[", "\"\<*h5\>\"", "]"}], "[", 
+    RowBox[{"[", "1", "]"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"t1D", "=", 
+   RowBox[{"Import", "[", 
+    RowBox[{"filename1D", ",", 
+     RowBox[{"{", 
+      RowBox[{"\"\<Datasets\>\"", ",", "\"\</1/t\>\""}], "}"}]}], "]"}]}], 
+  ";"}], "\n", 
+ RowBox[{
+  RowBox[{"r1D", "=", 
+   RowBox[{"Import", "[", 
+    RowBox[{"filename1D", ",", 
+     RowBox[{"{", 
+      RowBox[{"\"\<Datasets\>\"", ",", "\"\</1/r\>\""}], "}"}]}], "]"}]}], 
+  ";"}], "\n", 
+ RowBox[{
+  RowBox[{"imatom1D", "=", 
+   RowBox[{"Import", "[", 
+    RowBox[{"filename1D", ",", 
+     RowBox[{"{", 
+      RowBox[{"\"\<Datasets\>\"", ",", "\"\</1/imatom\>\""}], "}"}]}], 
+    "]"}]}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"reatom1D", "=", 
+   RowBox[{"Import", "[", 
+    RowBox[{"filename1D", ",", 
+     RowBox[{"{", 
+      RowBox[{"\"\<Datasets\>\"", ",", "\"\</1/reatom\>\""}], "}"}]}], 
+    "]"}]}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"imlight1D", "=", 
+   RowBox[{"Import", "[", 
+    RowBox[{"filename1D", ",", 
+     RowBox[{"{", 
+      RowBox[{"\"\<Datasets\>\"", ",", "\"\</1/imlight\>\""}], "}"}]}], 
+    "]"}]}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"relight1D", "=", 
+   RowBox[{"Import", "[", 
+    RowBox[{"filename1D", ",", 
+     RowBox[{"{", 
+      RowBox[{"\"\<Datasets\>\"", ",", "\"\</1/relight\>\""}], "}"}]}], 
+    "]"}]}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"modatom1D", "=", 
+   RowBox[{"Import", "[", 
+    RowBox[{"filename1D", ",", 
+     RowBox[{"{", 
+      RowBox[{"\"\<Datasets\>\"", ",", "\"\</1/modatom\>\""}], "}"}]}], 
+    "]"}]}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"modlight1D", "=", 
+   RowBox[{"Import", "[", 
+    RowBox[{"filename1D", ",", 
+     RowBox[{"{", 
+      RowBox[{"\"\<Datasets\>\"", ",", "\"\</1/modlight\>\""}], "}"}]}], 
+    "]"}]}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"relightint1D", "=", 
+   RowBox[{"Import", "[", 
+    RowBox[{"filename1D", ",", 
+     RowBox[{"{", 
+      RowBox[{"\"\<Datasets\>\"", ",", "\"\</1/relightint\>\""}], "}"}]}], 
+    "]"}]}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"imlightint1D", "=", 
+   RowBox[{"Import", "[", 
+    RowBox[{"filename1D", ",", 
+     RowBox[{"{", 
+      RowBox[{"\"\<Datasets\>\"", ",", "\"\</1/imlightint\>\""}], "}"}]}], 
+    "]"}]}], ";"}], "\n", 
+ RowBox[{"tmax1D", "=", 
+  RowBox[{"Length", "[", "t1D", "]"}]}], "\[IndentingNewLine]", 
+ RowBox[{"rmax1D", "=", 
+  RowBox[{"Length", "[", "r1D", "]"}]}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"ResetDirectory", "[", "]"}], ";"}]}], "Input",
+ CellChangeTimes->{{3.7071214949051323`*^9, 3.7071215020420094`*^9}, {
+  3.707121532256178*^9, 3.707121578581908*^9}, {3.7071253642178717`*^9, 
+  3.70712541208784*^9}, {3.707125553781287*^9, 3.707125561357225*^9}}],
+
+Cell[BoxData[{
+ RowBox[{"SetDirectory", "[", "]"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"filename2D", "=", 
+   RowBox[{
+    RowBox[{"FileNames", "[", "\"\<*h5\>\"", "]"}], "[", 
+    RowBox[{"[", "1", "]"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"t2D", "=", 
+   RowBox[{"Import", "[", 
+    RowBox[{"filename2D", ",", 
+     RowBox[{"{", 
+      RowBox[{"\"\<Datasets\>\"", ",", "\"\</1/t\>\""}], "}"}]}], "]"}]}], 
+  ";"}], "\n", 
+ RowBox[{
+  RowBox[{"x2D", "=", 
+   RowBox[{"Import", "[", 
+    RowBox[{"filename2D", ",", 
+     RowBox[{"{", 
+      RowBox[{"\"\<Datasets\>\"", ",", "\"\</1/x\>\""}], "}"}]}], "]"}]}], 
+  ";"}], "\n", 
+ RowBox[{
+  RowBox[{"y2D", "=", 
+   RowBox[{"Import", "[", 
+    RowBox[{"filename2D", ",", 
+     RowBox[{"{", 
+      RowBox[{"\"\<Datasets\>\"", ",", "\"\</1/y\>\""}], "}"}]}], "]"}]}], 
+  ";"}], "\n", 
+ RowBox[{
+  RowBox[{"imatom2D", "=", 
+   RowBox[{"Import", "[", 
+    RowBox[{"filename2D", ",", 
+     RowBox[{"{", 
+      RowBox[{"\"\<Datasets\>\"", ",", "\"\</1/imatom\>\""}], "}"}]}], 
+    "]"}]}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"reatom2D", "=", 
+   RowBox[{"Import", "[", 
+    RowBox[{"filename2D", ",", 
+     RowBox[{"{", 
+      RowBox[{"\"\<Datasets\>\"", ",", "\"\</1/reatom\>\""}], "}"}]}], 
+    "]"}]}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"imlight2D", "=", 
+   RowBox[{"Import", "[", 
+    RowBox[{"filename2D", ",", 
+     RowBox[{"{", 
+      RowBox[{"\"\<Datasets\>\"", ",", "\"\</1/imlight\>\""}], "}"}]}], 
+    "]"}]}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"relight2D", "=", 
+   RowBox[{"Import", "[", 
+    RowBox[{"filename2D", ",", 
+     RowBox[{"{", 
+      RowBox[{"\"\<Datasets\>\"", ",", "\"\</1/relight\>\""}], "}"}]}], 
+    "]"}]}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"modatom2D", "=", 
+   RowBox[{"Import", "[", 
+    RowBox[{"filename2D", ",", 
+     RowBox[{"{", 
+      RowBox[{"\"\<Datasets\>\"", ",", "\"\</1/modatom\>\""}], "}"}]}], 
+    "]"}]}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"modlight2D", "=", 
+   RowBox[{"Import", "[", 
+    RowBox[{"filename2D", ",", 
+     RowBox[{"{", 
+      RowBox[{"\"\<Datasets\>\"", ",", "\"\</1/modlight\>\""}], "}"}]}], 
+    "]"}]}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"relightint2D", "=", 
+   RowBox[{"Import", "[", 
+    RowBox[{"filename2D", ",", 
+     RowBox[{"{", 
+      RowBox[{"\"\<Datasets\>\"", ",", "\"\</1/relightint\>\""}], "}"}]}], 
+    "]"}]}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"imlightint2D", "=", 
+   RowBox[{"Import", "[", 
+    RowBox[{"filename2D", ",", 
+     RowBox[{"{", 
+      RowBox[{"\"\<Datasets\>\"", ",", "\"\</1/imlightint\>\""}], "}"}]}], 
+    "]"}]}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"ResetDirectory", "[", "]"}], ";"}]}], "Input",
+ CellChangeTimes->{{3.707122216212316*^9, 3.707122216691934*^9}, {
+  3.707125509589423*^9, 3.7071255491482487`*^9}}],
+
+Cell[BoxData[
+ RowBox[{"(*", " ", 
+  RowBox[{"2", "D", " ", "Mod", " ", "Atom", " ", "Plots"}], " ", 
+  "*)"}]], "Input",
+ CellChangeTimes->{{3.70712467622705*^9, 3.707124682239221*^9}, {
+  3.707125719494974*^9, 3.707125732053309*^9}}],
+
+Cell[BoxData[
+ RowBox[{"Table", "[", 
+  RowBox[{
+   RowBox[{"ListLinePlot", "[", 
+    RowBox[{
+     RowBox[{"Table", "[", 
+      RowBox[{
+       RowBox[{"{", " ", 
+        RowBox[{
+         RowBox[{"x1", "[", 
+          RowBox[{"[", "i", "]"}], "]"}], " ", ",", 
+         RowBox[{"modatom2D", "[", 
+          RowBox[{"[", 
+           RowBox[{"t", ",", "i", ",", "33"}], "]"}], "]"}]}], "}"}], " ", 
+       ",", 
+       RowBox[{"{", 
+        RowBox[{"i", ",", "1", ",", "xmax"}], "}"}]}], "]"}], ",", 
+     RowBox[{"ImageSize", "\[Rule]", "400"}], ",", 
+     RowBox[{"PlotLabel", "\[Rule]", 
+      RowBox[{"StringForm", "[", 
+       RowBox[{"\"\<timestep=`1`,t=`2`\>\"", ",", "t", ",", 
+        RowBox[{"t1", "[", 
+         RowBox[{"[", "t", "]"}], "]"}]}], "]"}]}], ",", 
+     RowBox[{"PlotLegends", "\[Rule]", "Automatic"}]}], "]"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"t", ",", "1", ",", "plotmax", ",", "plotint"}], "}"}]}], 
+  "]"}]], "Input",
+ CellChangeTimes->{{3.706522812653264*^9, 3.706522855147264*^9}, {
+  3.706523178019795*^9, 3.7065231786987762`*^9}, {3.706528630302046*^9, 
+  3.706528633973744*^9}, {3.7065287067091017`*^9, 3.706528710972693*^9}, {
+  3.707125734864292*^9, 3.707125735436717*^9}}]
+},
+WindowSize->{808, 911},
+WindowMargins->{{Automatic, 26}, {Automatic, 77}},
+FrontEndVersion->"10.3 for Linux x86 (64-bit) (October 9, 2015)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[558, 20, 2869, 85, 341, "Input"],
+Cell[3430, 107, 2794, 87, 319, "Input"],
+Cell[6227, 196, 235, 5, 32, "Input"],
+Cell[6465, 203, 1210, 30, 77, "Input"]
+}
+]
+*)
+
+(* End of internal cache information *)
