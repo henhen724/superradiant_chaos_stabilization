@@ -32,10 +32,14 @@ noise_prototype = zeros(ComplexF64, (vec_dim, 2)) #hetrodyne
 noise = RealWienerProcess!(0.0, zeros(2), save_everystep=false)
 # noise_prototype = zeros(Float64, (vec_dim, 1)) #homodyne
 
-κ = 0.15 #MHz
+N_A = 10^5 #unitless
+u0[2] = sqrt(N_A)
+κ = 8.1 #MHz
+E_0 = 40.0 #MHz
+ω_r = 0.05 #MHz
+
+
 ω_c = 80.0 #MHz
-ω_r = 0.01 #MHz
-E_0 = 1.0 #MHz
 P = 1.0 #MHz
 
 
