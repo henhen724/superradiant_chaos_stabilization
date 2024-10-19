@@ -1,0 +1,11 @@
+NAGLIB=-lnagsmp -lacml_mv -lacml_mp
+NAGDIR=-L/share/apps/NAG/fsl6a23dfl/lib/ -L/share/apps/NAG/fsl6a23dfl/acml4.4.0/lib/
+NAGINC=-I/share/apps/NAG/fsl6a23dfl/nag_interface_blocks/
+
+export PATH := /share/apps/gcc/4.6.2/:$(PATH)
+export LD_LIBRARY_PATH := /share/apps/gcc/4.6.2/lib/:$(LD_LIBRARY_PATH)
+
+FC=/share/apps/gcc/4.6.2/bin/gfortran
+LD=$(FC)
+
+LDFLAGS=  -L/share/apps/gcc/4.6.2/lib/ $(DEBUG) $(NAGDIR)  $(LAPACKDIR)

@@ -1,0 +1,5 @@
+
+NAGLIB=-lnag_nag
+NAGDIR=-L/home/mls/NAG/fll6a24dfl/lib
+NAGINC=-I/home/mls/NAG/fll6a24dfl/nag_interface_blocks
+

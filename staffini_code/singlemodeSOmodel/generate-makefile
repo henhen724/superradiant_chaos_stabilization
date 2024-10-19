@@ -1,0 +1,51 @@
+#!/bin/bash
+
+echo "##########################################"
+echo "This code produces the necessary makefile addition to use make in this folder. It assumes NAG libraries v.24 are installed in the canonical path. Enter DIRPATH and INCPATH vars appropriately if they are not."
+
+***
+
+NAGPATH="/home/$(whoami)/NAG/"
+
+if [ -d $NAGPATH ]; then
+    echo "Found NAG libraries..."
+else
+    echo "Specify path to NAG folder."
+    exit
+fi
+
+echo "Which version are you using?"
+read ver
+
+echo "Do you have a nonstandard gfortran path? [y/n]"
+read pspec
+
+NAME=$(hostname)
+    DIRPATH="-L${NAGPATH}/fll6a${ver}dfl/lib"
+    INCPATH="-I${NAGPATH}/fll6a${ver}dfl/nag_interface_blocks"
+
+cat <<EOF > Makefile.$NAME
+NAGLIB=-lnag_nag
+NAGDIR=${DIRPATH}
+NAGINC=$INCPATH
+EOF
+
+if [ "${pspec}" = "y" ]; then
+	echo "Edit this code with the info you need in the makefile:"
+	cat <<EOF >> Makefile.$NAME
+	export PATH := /share/apps/gcc/4.6.2/:$(PATH)
+	export LD_LIBRARY_PATH := /share/apps/gcc/4.6.2/lib/:$(LD_LIBRARY_PATH)
+	FC=/share/apps/gcc/4.6.2/bin/gfortran
+	LD=$(FC)
+	EOF
+else
+	cat <<EOF >> Makefile.$NAME
+	FC=gfortran
+	LD=$(FC)
+	EOF
+fi
+
+
+echo "All done.
+Created Makefile.${HOSTNAME} in folder."
+echo "##########################################"
