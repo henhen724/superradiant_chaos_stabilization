@@ -34,6 +34,8 @@ u0[2+to_1d_index(1, 0, transmax, longmax)] = 0.0
 u0[2+to_1d_index(0, 1, transmax, longmax)] = 0.0
 u0[2+to_1d_index(-1, 0, transmax, longmax)] = 0.0
 u0[2+to_1d_index(0, -1, transmax, longmax)] = 0.0
+norm = sum(abs(u0[2:end])^2)
+u0[2:end] = u0[2:end] / sqrt(norm)
 
 noise_prototype = zeros(ComplexF64, (vec_dim, 2)) #hetrodyne
 noise = RealWienerProcess!(0.0, zeros(2), save_everystep=false)
