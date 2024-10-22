@@ -65,11 +65,12 @@ function sde_diffusion(du, u, p, t)
 end
 
 
-tspan = (0.0, 50000.0)
+tspan = (0.0, 500000.0)
 
 probSDE = SDEProblem(sde_drift, sde_diffusion, u0, tspan, noise_rate_prototype=noise_prototype, noise=noise)
 probODE = ODEProblem(sde_drift, u0, tspan)
 # sol = solve(probSDE, RKMilGeneral(; ii_approx=IICommutative()); adaptive=false, dt=2^(-15))
-sol = solve(probODE, Tsit5(); reltol=10^-6, abstol=10^-5, dt=10^(-3))
+sol = solve(probODE, Tsit5(); reltol=10^-6, abstol=10^-5, dt=10^(-3), maxiters=10^10)
 using Plots
 plot(sol.t, map(x -> real(x[1]), sol.u))
+plot(map(x -> real(x[1]), sol.u)[end-200:end], map(x -> imag(x[1]), sol.u)[end-200:end])
