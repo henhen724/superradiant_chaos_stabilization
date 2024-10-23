@@ -14,8 +14,8 @@ end
 
 using DifferentialEquations
 
-longmax = 1
-transmax = 1
+longmax = 10
+transmax = 10
 
 N_A = 10^5 #unitless
 κ = 8.1 #MHz
@@ -34,7 +34,7 @@ u0[2+to_1d_index(1, 0, transmax, longmax)] = 0.0
 u0[2+to_1d_index(0, 1, transmax, longmax)] = 0.0
 u0[2+to_1d_index(-1, 0, transmax, longmax)] = 0.0
 u0[2+to_1d_index(0, -1, transmax, longmax)] = 0.0
-norm = sum(abs(u0[2:end])^2)
+norm = sum(abs.(u0[2:end]) .^ 2)
 u0[2:end] = u0[2:end] / sqrt(norm)
 
 noise_prototype = zeros(ComplexF64, (vec_dim, 2)) #hetrodyne
@@ -66,13 +66,16 @@ function sde_diffusion(du, u, p, t)
     du[1, 2] = im * sqrt(κ / 4) # comment out for homodyne
 end
 
-
-tspan = (0.0, 500000.0)
+trecord = LinRange(0.0, 5000.0, 5000)
+tspan = (trecord[begin], trecord[end])
 
 probSDE = SDEProblem(sde_drift, sde_diffusion, u0, tspan, noise_rate_prototype=noise_prototype, noise=noise)
 probODE = ODEProblem(sde_drift, u0, tspan)
 # sol = solve(probSDE, RKMilGeneral(; ii_approx=IICommutative()); adaptive=false, dt=2^(-15))
 sol = solve(probODE, Tsit5(); reltol=10^-6, abstol=10^-5, dt=10^(-3), maxiters=10^10)
-using Plots
+using Plots, LaTeXStrings
 plot(sol.t, map(x -> real(x[1]), sol.u))
-plot(map(x -> real(x[1]), sol.u)[end-200:end], map(x -> imag(x[1]), sol.u)[end-200:end])
+p = plot(map(x -> real(x[1]), sol.u), map(x -> imag(x[1]), sol.u))
+xaxis!(L"Re[\lambda]")
+yaxis!(L"Im[\lambda]")
+savefig("traj_buildup_plot.png")
