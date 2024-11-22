@@ -53,8 +53,8 @@ function run_dynamics_with_hetero(P, ω_tilde; N_A=10^5, κ=8.1, E_0=40.0, ω_r=
     end
 
     function sde_diffusion(du, u, p, t)
-        du[1, 1] = sqrt(κ / 4)
-        du[1, 2] = im * sqrt(κ / 4) # comment out for homodyne
+        du[1, 1] = sqrt(E_0 * κ / (4 * N_A * ω_r))
+        du[1, 2] = im * sqrt(E_0 * κ / (4 * N_A * ω_r)) # comment out for homodyne
     end
 
     trecord = 0.0:0.05:5000.0
@@ -101,7 +101,7 @@ function run_dynamics_no_meas(P, ω_tilde; N_A=10^5, κ=8.1, E_0=40.0, ω_r=0.05
         du[1] = -(κ + im * ω_c) * u[1] + im * E_0 * u[1] * long_sum_all + im * E_0 * P * checker_board_all
     end
 
-    trecord = 0.0:0.05:500.0
+    trecord = 0.0:0.05:5000.0
     tspan = (trecord[begin], trecord[end])
 
     probODE = ODEProblem(sde_drift, u0, tspan)
@@ -112,21 +112,47 @@ end
 
 Ps = [0.238, 0.367, 0.450, 0.533, 0.617, 0.700]
 ω_tildes = [1.880, 1.520, 1.170, 0.825, 0.475, 0.125]
-P = Ps[3]
-ω_tilde = ω_tildes[6]
-sol = run_dynamics_with_hetero(P, ω_tilde)
+P = Ps[4]
+ω_tilde = ω_tildes[2]
+sol = run_dynamics_with_hetero(P, ω_tilde; N_A=10^5)
 plot(sol.t, map(x -> real(x[1]), sol.u))
+p33 = plot(sol.t, map(x -> real(x[2+to_1d_index(3, 3, 10, 10)]), sol.u), label=L"Re[\langle c_{3,3} \rangle]")
+plot!(p33, sol.t, map(x -> imag(x[2+to_1d_index(3, 3, 10, 10)]), sol.u), label=L"Im[\langle c_{3,3} \rangle]")
+xaxis!(p33, L"Time [\mu s]")
+yaxis!(p33, (-0.2, 0.2))
+title!(p33, L"3,3 $k_r$ state $N_A=10^5$")
+savefig(p33, "state33_timeseries.png")
+
+
 p = scatter(map(x -> real(x[1]), sol.u), map(x -> imag(x[1]), sol.u), zcolor=sol.t, xlims=(-8, 8), ylims=(-8, 8), colormap=:viridis, colorbar=true, markerstrokewidth=0, markersize=0.8, label="P=$(P), ω=$(ω_tilde)")
 title!(p, "Trajectory with Heterodyne Measurement")
 xaxis!(L"Re[\lambda]")
 yaxis!(L"Im[\lambda]")
+savefig(p, "buildup_hetero.png")
 
-sol = run_dynamics_without_hetero(P, ω_tilde)
-plot(sol.t, map(x -> real(x[1]), sol.u))
+sol_no_meas = run_dynamics_no_meas(P, ω_tilde)
+plot(sol.t, map(x -> real(x[2+to_1d_index(3, 3, 10, 10)]), sol_no_meas.u))
+ptimeseries = plot(sol.t, map(x -> real(x[1]), sol.u), label=L"Re[$\langle a \rangle$]")
+plot!(ptimeseries, sol.t, map(x -> imag(x[1]), sol.u), label=L"Im[$\langle a \rangle$]")
+title!(ptimeseries, "Time Series of Meanfield Dyanmics")
+xaxis!(ptimeseries, L"Time [$\mu$s]")
+savefig(ptimeseries, "traj_timeseries.png")
 p = scatter(map(x -> real(x[1]), sol.u), map(x -> imag(x[1]), sol.u), zcolor=sol.t, xlims=(-8, 8), ylims=(-8, 8), colormap=:viridis, colorbar=true, markerstrokewidth=0, markersize=0.8, label="P=$(P), ω=$(ω_tilde)")
-title!(p, "Trajectory without Heterodyne Measurement")
+title!(p, "Trajectory without Measurement")
 xaxis!(L"Re[\lambda]")
 yaxis!(L"Im[\lambda]")
+savefig(p, "traj_buildup.png")
+
+N_As = [10^6, 10^5, 10^4, 10^3, 10^2, 10^1]
+plot_list = []
+for N_A in N_As
+    sol = run_dynamics_with_hetero(P, ω_tilde; N_A=N_A)
+    p = scatter(map(x -> real(x[1]), sol.u), map(x -> imag(x[1]), sol.u), zcolor=sol.t, xlims=(-8, 8), ylims=(-8, 8), colormap=:viridis, markerstrokewidth=0, markersize=0.8, label="N_A=$(N_A)", colorbar=false)
+    push!(plot_list, p)
+end
+
+combined_plot = plot(plot_list..., layout=(2, 3), size=(1800, 1200))
+savefig(combined_plot, "traj_buildup_NA_combined_plot.png")
 
 plot_list = []
 
