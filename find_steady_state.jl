@@ -1,8 +1,8 @@
-using DifferentialEquations, Plots, LaTeXStrings, NonlinearSolve, LinearAlgebra, NLsolve
+using DifferentialEquations, Plots, LaTeXStrings, LinearAlgebra, NLsolve, KrylovKit
 include("multimomenta_lib.jl")
 
-P = 0.0
-ω_tilde = 3.00
+P = 0.5
+ω_tilde = 1.5
 N_A = 10^5
 κ = 8.1
 E_0 = 40.0
@@ -10,67 +10,86 @@ E_0 = 40.0
 longmax = 10
 transmax = 10
 
-ω_c = E_0 * ω_tilde
-# phi_e = sqrt(1 / 2 - ω_r / (4 * ω_c * P) * (ω_c^2 + κ^2))
-phi_e = 0.4
-
-vec_dim = 1 + (2 * longmax + 1) * (2 * transmax + 1)
-u0 = (1 - im) / (2 * sqrt(2 * N_A)) * ones(ComplexF64, vec_dim)
-u0[1] = 0.0
-u0[2+to_1d_index(0, 0, transmax, longmax)] = sqrt(1 - phi_e^2)
-u0[2+to_1d_index(1, 0, transmax, longmax)] = phi_e / 2
-u0[2+to_1d_index(0, 1, transmax, longmax)] = phi_e / 2
-u0[2+to_1d_index(-1, 0, transmax, longmax)] = phi_e / 2
-u0[2+to_1d_index(0, -1, transmax, longmax)] = phi_e / 2
-u0norm = sum(abs.(u0[2:end]) .^ 2)
-u0[2:end] = u0[2:end] / sqrt(u0norm)
-
-
-function complex_to_real(vec::Vector{Complex{T}}) where {T}
-    vec_dim = length(vec)
-    vecReal = zeros(T, 2 * vec_dim)
-    vecReal[begin:vec_dim] = real.(vec)
-    vecReal[vec_dim+1:end] = imag.(vec)
-    return vecReal
+function cavity_eq!(u; P=0.0, ω_tilde=0.0, N_A=10^5, κ=8.1, E_0=40.0, ω_r=0.05, longmax=10, transmax=10)
+    ω_c = ω_tilde * E_0
+    trans_sum_all = 0
+    checker_board_all = 0
+    for n in -transmax:transmax
+        for m in -longmax:longmax
+            mom_indx = to_1d_index(n, m, transmax, longmax)
+            trans_sum = safe_index_2D(u, n + 2, m, longmax, transmax) + safe_index_2D(u, n - 2, m, longmax, transmax)
+            trans_sum_all += conj(trans_sum) * u[2+mom_indx]
+            checker_board = safe_index_2D(u, n + 1, m + 1, longmax, transmax) +
+                            safe_index_2D(u, n + 1, m - 1, longmax, transmax) +
+                            safe_index_2D(u, n - 1, m + 1, longmax, transmax) +
+                            safe_index_2D(u, n - 1, m - 1, longmax, transmax)
+            checker_board_all += conj(checker_board) * u[2+mom_indx]
+        end
+    end
+    return (-(κ + im * ω_c) * u[1] + im * E_0 * u[1] * trans_sum_all + im * E_0 * P * checker_board_all)
 end
 
-function complex_to_real(vecReal::Vector{T}, vec::Vector{Complex{T}}) where {T}
-    vec_dim = length(vec)
-    vecReal[begin:vec_dim] = real.(vec)
-    vecReal[vec_dim+1:end] = imag.(vec)
+function cavity_eq_for_eigvec(n, λ, u0; P=0.0, ω_tilde=0.0, N_A=10^5, κ=8.1, E_0=40.0, ω_r=0.05, longmax=10, transmax=10)
+    H = atomic_hamiltonian!(λ; P=P, ω_r=ω_r, longmax=longmax, transmax=transmax)
+
+    # Find the lowest energy eigenvector using eigsolve
+    eigenvalues, eigenvectors = eigsolve(H, u0, n, :SR)
+    lowest_energy_eigenvector = Array(eigenvectors[n])
+
+    # Normalize the eigenvector
+    lowest_energy_eigenvector /= norm(lowest_energy_eigenvector)
+
+    return cavity_eq!(cat(λ, lowest_energy_eigenvector, dims=1); P=P, ω_tilde=ω_tilde, N_A=N_A, κ=κ, E_0=E_0, ω_r=ω_r, longmax=longmax, transmax=transmax)
 end
 
-function real_to_complex(vec::Vector{T}) where {T<:Real}
-    @assert length(vec) % 2 == 0
-    vec_dim = Int(length(vec) // 2)
-    vecComplex = zeros(Complex{T}, vec_dim)
-    vecComplex = vec[begin:vec_dim] + im * vec[vec_dim+1:end]
-    return vecComplex
+function find_lambda(; λ0=0.0, P=0.0, ω_tilde=0.0, N_A=10^5, κ=8.1, E_0=40.0, ω_r=0.05, longmax=10, transmax=10, n=1, rate=1.0)
+    λ = λ0
+    tol = 1e-5
+    max_iters = 10^5
+    iter = 0
+
+    vec_dim = (2 * longmax + 1) * (2 * transmax + 1)
+    u0 = (1 - im) / (2 * sqrt(2 * N_A)) * ones(ComplexF64, vec_dim)
+    u0[1+to_1d_index(0, 0, transmax, longmax)] = 1.0
+    u0[1+to_1d_index(1, 0, transmax, longmax)] = 0.0
+    u0[1+to_1d_index(0, 1, transmax, longmax)] = 0.0
+    u0[1+to_1d_index(-1, 0, transmax, longmax)] = 0.0
+    u0[1+to_1d_index(0, -1, transmax, longmax)] = 0.0
+    u0norm = sum(abs.(u0[2:end]) .^ 2)
+    u0 = u0 / sqrt(u0norm)
+
+    while iter < max_iters
+        iter += 1
+
+        cavity_value = cavity_eq_for_eigvec(n, λ, u0; P=P, ω_tilde=ω_tilde, N_A=N_A, κ=κ, E_0=E_0, ω_r=ω_r, longmax=longmax, transmax=longmax)
+
+
+        if abs(cavity_value) < tol
+            break
+        end
+
+        cavity_value_per = cavity_eq_for_eigvec(n, λ + tol, u0; P=P, ω_tilde=ω_tilde, N_A=N_A, κ=κ, E_0=E_0, ω_r=ω_r, longmax=longmax, transmax=longmax)
+
+        # Update λ using Newton-Raphson method
+        derivative = (cavity_value_per - cavity_value) / tol
+        delta_lambda = rate * cavity_value / derivative
+        if abs(delta_lambda) > 1e-1
+            λ -= rate * delta_lambda
+        else
+            println("Using final steps")
+            λ -= delta_lambda
+        end
+        println("New lambda $(λ) with resid $(norm(cavity_value)) and derivative $(derivative)")
+    end
+
+    if iter == max_iters
+        println("Warning reached max iters.")
+    end
+
+    return λ
 end
 
-function real_to_complex(vecComplex::Vector{Complex{T}}, vec::Vector{T}) where {T<:Real}
-    @assert length(vec) % 2 == 0
-    vec_dim = Int(length(vec) // 2)
-    vecComplex .= vec[begin:vec_dim] + im * vec[vec_dim+1:end]
-end
+λ = find_lambda(; λ0=2.0, P=P, ω_tilde=ω_tilde, N_A=N_A, κ=κ, E_0=E_0, ω_r=ω_r, longmax=longmax, transmax=transmax, n=1, rate=0.1)
 
-duComplex = 0.0 * similar(u0)
 
-function fixed_point_condition(du, u, p, t)
-    u[2:end] = u[2:end] / norm(u[2:end])
-    # print(norm(u[2:end]))
-    multimomenta_model_drift!(duComplex, u, nothing, nothing; P=P, ω_tilde=ω_tilde, N_A=N_A, κ=κ, E_0=E_0, ω_r=ω_r, longmax=longmax, transmax=transmax)
-
-    du[1] = duComplex[1]
-
-    du[2:end] = duComplex[2:end] + (1 - dot(conj.(u[2:end]), u[2:end]) - dot(conj.(duComplex[2:end]), u[2:end]) / dot(conj.(u[2:end]), u[2:end])) * u[2:end]
-
-    return du
-end
-
-# u0 = sol.u
-
-# prob = SteadyStateProblem(fixed_point_condition, u0)
-
-# sol = solve(prob; abstol=1e-5, reltol=1e-5, maxiters=10^10, progress_steps=true)
 
