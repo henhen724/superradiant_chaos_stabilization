@@ -93,9 +93,10 @@ end
 
 vec_dim = 1 + (2 * longmax + 1) * (2 * transmax + 1)
 u0 = (1 - im) / (2 * sqrt(2 * N_A)) * ones(ComplexF64, vec_dim)
+u0[1] = 3.0
 u0[2+to_1d_index(0, 0, transmax, longmax)] = 1.0
 u0[2+to_1d_index(1, 0, transmax, longmax)] = 0.0
-u0[2+to_1d_index(0, 1, transmax, longmax)] = 0.0
+u0[2+to_1d_index(0, 1, transmax, longmax)] = 0.3
 u0[2+to_1d_index(-1, 0, transmax, longmax)] = 0.0
 u0[2+to_1d_index(0, -1, transmax, longmax)] = 0.0
 u0norm = sum(abs.(u0[2:end]) .^ 2)
@@ -104,6 +105,7 @@ u0[2:end] = u0[2:end] / sqrt(u0norm)
 function drift!(du, u, p, t)
     u[2:end] = u[2:end] / norm(u[2:end])
     dispative_dynamics!(du, u, p, t; P=P, ω_tilde=ω_tilde, N_A=N_A, κ=κ, E_0=E_0, ω_r=ω_r, longmax=longmax, transmax=transmax)
+    du[2:end] -= u[2:end] * dot(conj.(u[2:end]), du[2:end]) / dot(conj.(u[2:end]), u[2:end])
 end
 
 trecord = 0.0:0.05:500.0
@@ -119,4 +121,16 @@ savefig(p, "JulianDynamics.png")
 duTest = 0.0 * similar(u0)
 multimomenta_model_drift!(duTest, sol.u[end], nothing, nothing; P=P, ω_tilde=ω_tilde, N_A=N_A, κ=κ, E_0=E_0, ω_r=ω_r, longmax=longmax, transmax=transmax)
 
-println("norm of duTest $(norm(duTest))")
+println("norm of dlambda $(norm(duTest[1]))")
+
+datom = duTest[2:end] - sol.u[end][2:end] * dot(conj.(sol.u[end][2:end]), duTest[2:end]) / dot(conj.(sol.u[end][2:end]), sol.u[end][2:end])
+
+println("norm of datom $(norm(datom))")
+
+dispative_dynamics!(duTest, sol.u[end], nothing, nothing; P=P, ω_tilde=ω_tilde, N_A=N_A, κ=κ, E_0=E_0, ω_r=ω_r, longmax=longmax, transmax=transmax)
+
+println("norm of dlambda $(norm(duTest[1]))")
+
+datom = duTest[2:end] - sol.u[end][2:end] * dot(conj.(sol.u[end][2:end]), duTest[2:end]) / dot(conj.(sol.u[end][2:end]), sol.u[end][2:end])
+
+println("norm of datom $(norm(datom))")
