@@ -35,6 +35,27 @@ function multimomenta_model_drift!(du, u, p, t; P=0.0, ω_tilde=0.0, N_A=10^5, �
     du[1] = -(κ + im * ω_c) * u[1] + im * E_0 * u[1] * trans_sum_all + im * E_0 * P * checker_board_all
 end
 
+function dispative_dynamics!(du, u, p, t; P=0.0, ω_tilde=0.0, N_A=10^5, κ=8.1, E_0=40.0, ω_r=0.05, longmax=10, transmax=10)
+    ω_c = ω_tilde * E_0
+    trans_sum_all = 0
+    checker_board_all = 0
+    for n in -transmax:transmax
+        for m in -longmax:longmax
+            mom_indx = to_1d_index(n, m, transmax, longmax)
+            trans_sum = safe_index_2D(u, n + 2, m, longmax, transmax) + safe_index_2D(u, n - 2, m, longmax, transmax)
+            long_sum = safe_index_2D(u, n, m + 2, longmax, transmax) + safe_index_2D(u, n, m - 2, longmax, transmax)
+            trans_sum_all += conj(trans_sum) * u[2+mom_indx]
+            checker_board = safe_index_2D(u, n + 1, m + 1, longmax, transmax) +
+                            safe_index_2D(u, n + 1, m - 1, longmax, transmax) +
+                            safe_index_2D(u, n - 1, m + 1, longmax, transmax) +
+                            safe_index_2D(u, n - 1, m - 1, longmax, transmax)
+            checker_board_all += conj(checker_board) * u[2+mom_indx]
+            du[2+mom_indx] = -ω_r * ((n^2 + m^2) * u[2+mom_indx] - conj(u[1]) * u[1] * long_sum - P * (u[1] + conj(u[1])) * checker_board - P^2 * trans_sum)
+        end
+    end
+    du[1] = -(κ + im * ω_c) * u[1] + im * E_0 * u[1] * trans_sum_all + im * E_0 * P * checker_board_all
+end
+
 function atomic_hamiltonian!(λ; P=0.0, ω_r=0.05, longmax=10, transmax=10)
     vec_dim = (2 * longmax + 1) * (2 * transmax + 1)
     H = spzeros(ComplexF64, (vec_dim, vec_dim))

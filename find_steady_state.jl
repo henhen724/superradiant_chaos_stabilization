@@ -93,10 +93,10 @@ end
 
 vec_dim = 1 + (2 * longmax + 1) * (2 * transmax + 1)
 u0 = (1 - im) / (2 * sqrt(2 * N_A)) * ones(ComplexF64, vec_dim)
-u0[1] = 3.0
+u0[1] = 30.0
 u0[2+to_1d_index(0, 0, transmax, longmax)] = 1.0
 u0[2+to_1d_index(1, 0, transmax, longmax)] = 0.0
-u0[2+to_1d_index(0, 1, transmax, longmax)] = 0.3
+u0[2+to_1d_index(0, 1, transmax, longmax)] = 0.0
 u0[2+to_1d_index(-1, 0, transmax, longmax)] = 0.0
 u0[2+to_1d_index(0, -1, transmax, longmax)] = 0.0
 u0norm = sum(abs.(u0[2:end]) .^ 2)
@@ -108,7 +108,7 @@ function drift!(du, u, p, t)
     du[2:end] -= u[2:end] * dot(conj.(u[2:end]), du[2:end]) / dot(conj.(u[2:end]), u[2:end])
 end
 
-trecord = 0.0:0.05:500.0
+trecord = 0.0:0.05:5000.0
 tspan = (trecord[begin], trecord[end])
 
 probODE = ODEProblem(drift!, u0, tspan)
