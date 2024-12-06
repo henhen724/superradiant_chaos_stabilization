@@ -91,6 +91,73 @@ function atomic_hamiltonian!(λ::T; P=0.0, ω_r=0.05, longmax=10, transmax=10) w
     return dropzeros(H)
 end
 
+function cavity_eq!(u; P=0.0, ω_tilde=0.0, N_A=10^5, κ=8.1, E_0=40.0, ω_r=0.05, longmax=10, transmax=10)
+    ω_c = ω_tilde * E_0
+    trans_sum_all = 0
+    checker_board_all = 0
+    for n in -transmax:transmax
+        for m in -longmax:longmax
+            mom_indx = to_1d_index(n, m, transmax, longmax)
+            trans_sum = safe_index_2D(u, n + 2, m, longmax, transmax) + safe_index_2D(u, n - 2, m, longmax, transmax)
+            trans_sum_all += conj(trans_sum) * u[2+mom_indx]
+            checker_board = safe_index_2D(u, n + 1, m + 1, longmax, transmax) +
+                            safe_index_2D(u, n + 1, m - 1, longmax, transmax) +
+                            safe_index_2D(u, n - 1, m + 1, longmax, transmax) +
+                            safe_index_2D(u, n - 1, m - 1, longmax, transmax)
+            checker_board_all += conj(checker_board) * u[2+mom_indx]
+        end
+    end
+    return (-(κ + im * ω_c) * u[1] + im * E_0 * u[1] * trans_sum_all + im * E_0 * P * checker_board_all)
+end
+
+function cavity_eq_for_eigvec(n, λ, u0; P=0.0, ω_tilde=0.0, N_A=10^5, κ=8.1, E_0=40.0, ω_r=0.05, longmax=10, transmax=10)
+    H = atomic_hamiltonian!(λ; P=P, ω_r=ω_r, longmax=longmax, transmax=transmax)
+
+    # Find the lowest energy eigenvector using eigsolve
+    eigenvalues, eigenvectors = eigsolve(H, u0, n, :SR)
+    lowest_energy_eigenvector = Array(eigenvectors[n])
+
+    # Normalize the eigenvector
+    lowest_energy_eigenvector /= norm(lowest_energy_eigenvector)
+
+    return cavity_eq!(cat(λ, lowest_energy_eigenvector, dims=1); P=P, ω_tilde=ω_tilde, N_A=N_A, κ=κ, E_0=E_0, ω_r=ω_r, longmax=longmax, transmax=transmax)
+end
+
+function find_steady_state(; P=0.0, ω_tilde=2.0, N_A=10^5, κ=8.1, E_0=40.0, ω_r=0.05, longmax=10, transmax=10, eigen_index=1, u0=nothing)
+    if u0 isa Nothing
+        vec_dim = (2 * longmax + 1) * (2 * transmax + 1)
+        u0 = (1 - im) / (2 * sqrt(2 * N_A)) * ones(ComplexF64, vec_dim)
+        u0[1+to_1d_index(0, 0, transmax, longmax)] = 1.0
+        u0[1+to_1d_index(1, 0, transmax, longmax)] = 0.0
+        u0[1+to_1d_index(0, 1, transmax, longmax)] = 0.0
+        u0[1+to_1d_index(-1, 0, transmax, longmax)] = 0.0
+        u0[1+to_1d_index(0, -1, transmax, longmax)] = 0.0
+        u0norm = sum(abs.(u0[2:end]) .^ 2)
+        u0 = u0 / sqrt(u0norm)
+    end
+
+    function f(dx, x, p)
+        λ = real_to_complex(x)
+        dλ = real_to_complex(dx)
+        dλ[1] = cavity_eq_for_eigvec(eigen_index, λ[1], u0; P=P, ω_tilde=ω_tilde, N_A=N_A, κ=κ, E_0=E_0, ω_r=ω_r, longmax=longmax, transmax=longmax)
+        complex_to_real(dx, dλ)
+    end
+
+    prob = NonlinearProblem(f, Float64[2.0, -1.0], nothing; abstol=1e-3, reltol=1e-3)
+    sol = solve(prob, RobustMultiNewton(; autodiff=AutoFiniteDiff()); abstol=1e-5)
+
+    @assert sol.retcode == ReturnCode.Success
+
+    λ = real_to_complex(sol.u)[1]
+
+    H = atomic_hamiltonian!(λ; P=P, ω_r=ω_r, longmax=longmax, transmax=transmax)
+
+    eigvals, eigvecs = eigsolve(H, u0, eigen_index, :SR)
+    vec = Array(eigvecs[eigen_index])
+
+    return hcat([λ, vec...])
+end
+
 function complex_to_real(vec::Vector{Complex{T}}) where {T}
     vec_dim = length(vec)
     vecReal = zeros(T, 2 * vec_dim)
