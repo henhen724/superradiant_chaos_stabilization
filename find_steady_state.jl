@@ -1,4 +1,4 @@
-using DifferentialEquations, Plots, LaTeXStrings, LinearAlgebra, NLsolve, KrylovKit
+using DifferentialEquations, Plots, LaTeXStrings, LinearAlgebra, KrylovKit, NonlinearSolve
 include("multimomenta_lib.jl")
 
 P = 0.5
@@ -89,7 +89,28 @@ function find_lambda(; λ0=0.0, P=0.0, ω_tilde=0.0, N_A=10^5, κ=8.1, E_0=40.0,
     return λ
 end
 
-λ = find_lambda(; λ0=2.0, P=P, ω_tilde=ω_tilde, N_A=N_A, κ=κ, E_0=E_0, ω_r=ω_r, longmax=longmax, transmax=transmax, n=1, rate=0.1)
+λ = find_lambda(; λ0=2.0, P=P, ω_tilde=ω_tilde, N_A=N_A, κ=κ, E_0=E_0, ω_r=ω_r, longmax=longmax, transmax=transmax, n=1)
+
+vec_dim = (2 * longmax + 1) * (2 * transmax + 1)
+u0 = (1 - im) / (2 * sqrt(2 * N_A)) * ones(ComplexF64, vec_dim)
+u0[1+to_1d_index(0, 0, transmax, longmax)] = 1.0
+u0[1+to_1d_index(1, 0, transmax, longmax)] = 0.0
+u0[1+to_1d_index(0, 1, transmax, longmax)] = 0.0
+u0[1+to_1d_index(-1, 0, transmax, longmax)] = 0.0
+u0[1+to_1d_index(0, -1, transmax, longmax)] = 0.0
+u0norm = sum(abs.(u0[2:end]) .^ 2)
+u0 = u0 / sqrt(u0norm)
+
+function f(dx, x, p)
+    λ = real_to_complex(x)
+    dλ = real_to_complex(dx)
+    dλ[1] = cavity_eq_for_eigvec(1, λ[1], u0; P=P, ω_tilde=ω_tilde, N_A=N_A, κ=κ, E_0=E_0, ω_r=ω_r, longmax=longmax, transmax=longmax)
+    complex_to_real(dx, dλ)
+end
+
+prob = NonlinearProblem(f, Float64[2.0, -1.0], nothing; abstol=1e-3, reltol=1e-3)
+sol = solve(prob, RobustMultiNewton(; autodiff=AutoFiniteDiff()); abstol=1e-5)
+
 
 vec_dim = 1 + (2 * longmax + 1) * (2 * transmax + 1)
 u0 = (1 - im) / (2 * sqrt(2 * N_A)) * ones(ComplexF64, vec_dim)
