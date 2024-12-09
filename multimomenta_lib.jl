@@ -1,4 +1,4 @@
-using SparseArrays
+using SparseArrays, KrylovKit
 
 function to_1d_index(n::Int, m::Int, transmax::Int, longmax::Int)::Int
     @assert -transmax <= n <= transmax
@@ -123,7 +123,7 @@ function cavity_eq_for_eigvec(n, λ, u0; P=0.0, ω_tilde=0.0, N_A=10^5, κ=8.1, 
     return cavity_eq!(cat(λ, lowest_energy_eigenvector, dims=1); P=P, ω_tilde=ω_tilde, N_A=N_A, κ=κ, E_0=E_0, ω_r=ω_r, longmax=longmax, transmax=transmax)
 end
 
-function find_steady_state(; P=0.0, ω_tilde=2.0, N_A=10^5, κ=8.1, E_0=40.0, ω_r=0.05, longmax=10, transmax=10, eigen_index=1, u0=nothing)
+function find_steady_state(; P=0.0, ω_tilde=2.0, N_A=10^5, κ=8.1, E_0=40.0, ω_r=0.05, longmax=10, transmax=10, eigen_index=1, u0=nothing, λ0=1.0 + im)
     if u0 isa Nothing
         vec_dim = (2 * longmax + 1) * (2 * transmax + 1)
         u0 = (1 - im) / (2 * sqrt(2 * N_A)) * ones(ComplexF64, vec_dim)
@@ -143,7 +143,7 @@ function find_steady_state(; P=0.0, ω_tilde=2.0, N_A=10^5, κ=8.1, E_0=40.0, ω
         complex_to_real(dx, dλ)
     end
 
-    prob = NonlinearProblem(f, Float64[2.0, -1.0], nothing; abstol=1e-3, reltol=1e-3)
+    prob = NonlinearProblem(f, complex_to_real([λ0]), nothing; abstol=1e-3, reltol=1e-3)
     sol = solve(prob, RobustMultiNewton(; autodiff=AutoFiniteDiff()); abstol=1e-5)
 
     @assert sol.retcode == ReturnCode.Success
@@ -155,7 +155,7 @@ function find_steady_state(; P=0.0, ω_tilde=2.0, N_A=10^5, κ=8.1, E_0=40.0, ω
     eigvals, eigvecs = eigsolve(H, u0, eigen_index, :SR)
     vec = Array(eigvecs[eigen_index])
 
-    return hcat([λ, vec...])
+    return hcat([λ, vec...])[:, 1]
 end
 
 function complex_to_real(vec::Vector{Complex{T}}) where {T}
