@@ -46,33 +46,97 @@ function control_matrix!(B, st_control, p, t)
             return complex_to_real(du)
         end, st_control)
 end
-function is_controllable(A, B; n=nothing)
-    if n isa Nothing
-        n = size(A, 1)
+
+function check_tol(a::T, tol) where {T<:Number}
+    if abs(a) > tol
+        return a
     end
-    ctrb_matrix = hcat([A^i * B for i in 0:n-1]...)
-    rank(ctrb_matrix) == n
+    return zero(T)
+end
+
+function find_image_projection(M; tol=1e-6)
+    U, s, Vt = svd(M)
+    non_zero_indeces = [i for i in 1:size(U, 2) if abs(s[i]) > tol]
+    return U[:, non_zero_indeces]
+end
+
+function gram_schmidt(V; tol=1e-6, check_from=2)
+    U = copy(V)
+    U[:, 1] /= norm(U[:, 1])
+    for i in check_from:size(V, 2)
+        U[:, i] -= U[:, 1:i-1] * (U[:, 1:i-1]' * U[:, i])
+        if norm(U[:, i]) > tol
+            U[:, i] /= norm(U[:, i])
+        else
+            U[:, i] .= 0.0
+        end
+    end
+    return U
+end
+
+function remove_zero_columns!(matrix; tol=1e-6)
+    non_zero_cols = [i for i in 1:size(matrix, 2) if norm(matrix[:, i]) > tol]
+    return matrix[:, non_zero_cols]
+end
+
+function controllable_subspace_projector(A, B; n=size(A, 2), tol=1e-6)
+    Pt = find_image_projection(Array(B); tol=tol)
+    B_curr = B
+    for i in 1:(n-1)
+        B_curr = A * B_curr
+        Pt = find_image_projection(Array(hcat(Pt, B_curr)); tol=tol)
+        if rank(Pt) == size(A, 1)
+            break
+        end
+    end
+    return Pt
+end
+
+function controllable(A, B; tol=1e-10)
+    Pt = controllable_subspace_projector(A, B; tol=tol)
+    return rank(Pt) == size(A, 1)
 end
 
 
 control_vec = ComplexF64[P, ω_tilde, 0.0]
-B = zeros(Float64, 2 * length(u_end), 2 * 3)
+B = zeros(Float64, 2 * length(u_end), 2 * length(control_vec))
 control_matrix!(B, complex_to_real(control_vec), nothing, nothing)
 B = sparse(B)
-controllable = is_controllable(A, B; n=40)
-
+# Proj = controllable_subspace_projector(A, B; tol=1e-10)
+# controllable = controllable(A, B)
 
 Q = Array{Float64}(I(2 * length(u_end)))
-R = Array{Float64}(I(6))
+R = Array{Float64}(I(2 * length(control_vec))) / 3
 
 function solve_riccati(A, B, Q, R)
-    P = lyap(A, B * inv(R) * B', -Q)
-    return P
+    AREH = [A -B*inv(R)*B'; -Q -A']
+    evals, evecs = eigen(AREH)
+    n = size(A, 1)
+    println(evals[1:n])
+    return evecs[n+1:2n, 1:n] * inv(evecs[1:n, 1:n])
 end
 
-P = solve_riccati(A, B, Q, R)
-println("Solution to the Riccati equation: ", P)
+CostMat = solve_riccati(Array(A), Array(B), Q, R)
 
 
+vec_dim = 1 + (2 * longmax + 1) * (2 * transmax + 1)
+u0 = (1 - im) / (2 * sqrt(2 * N_A)) * ones(ComplexF64, vec_dim)
+u0[2+to_1d_index(0, 0, transmax, longmax)] = 1.0
+u0[2+to_1d_index(1, 0, transmax, longmax)] = 0.0
+u0[2+to_1d_index(0, 1, transmax, longmax)] = 0.0
+u0[2+to_1d_index(-1, 0, transmax, longmax)] = 0.0
+u0[2+to_1d_index(0, -1, transmax, longmax)] = 0.0
+u0norm = sum(abs.(u0[2:end]) .^ 2)
+u0[2:end] = u0[2:end] / sqrt(u0norm)
 
-println("Is the system controllable? ", controllable)
+function sde_drift!(du, u, p, t)
+    cont_vec = real_to_complex(inv(R) * B' * CostMat * complex_to_real(u - u_end))
+    multimomenta_model_drift!(du, u, p, t; P=P + cont_vec[1], ω_tilde=ω_tilde + cont_vec[2], N_A=N_A, κ=κ, E_0=E_0, ω_r=ω_r, ϵ=cont_vec[3], longmax=longmax, transmax=transmax)
+end
+
+trecord = 0.0:0.05:5000.0
+tspan = (trecord[begin], trecord[end])
+
+probODE = ODEProblem(sde_drift!, u0, tspan)
+# sol = solve(probSDE, RKMilGeneral(; ii_approx=IICommutative()); adaptive=false, dt=2^(-15))
+sol = solve(probODE, Tsit5(); reltol=10^-4, abstol=10^-4, dt=10^(-3), maxiters=10^12, save_noise=false, save_everystep=false, saveat=trecord)
