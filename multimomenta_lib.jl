@@ -197,3 +197,36 @@ function real_to_complex(mat::Matrix{T}) where {T<:Real}
     c_matrix[c_dims[1]+1:end, c_dims[2]+1:end] = complex.(mat[begin:c_dims[1], begin:c_dims[2]] - mat[c_dims[1]+1:end, c_dims[2]+1:end], -mat[c_dims[1]+1:end, begin:c_dims[2]] - mat[begin:c_dims[1], c_dims[2]+1:end])
     return c_matrix ./ 2
 end
+
+function plot_complex_function(f; xlims=(-1.0, 1.0), ylims=(-1.0, 1.0), resolution=100, gamma=1, kwargs...)
+    x = range(xlims[1], xlims[2], length=resolution)
+    y = range(ylims[1], ylims[2], length=resolution)
+    z = [f(complex(re, im)) for re in x, im in y]
+
+    plot_complex_mesh(x, y, z; xlims=xlims, ylims=ylims, gamma=gamma, color=:hsv, kwargs...)
+end
+
+function plot_complex_mesh(x, y, z; gamma=0.5, kwargs...)
+    angles = angle.(z)
+    mags = (abs.(z)) .^ gamma
+    colors = HSV.((angles) ./ (π / 180.0), 1.0, mags ./ maximum(mags))
+
+    heatmap(x, y, colors; kwargs...)#, kwargs...)
+end
+
+function plot_gaussian_bumps(u0; longmax=2, transmax=2, sigma=0.1, pixel_per_bump=10, kwargs...)
+    x = range(-(transmax + 1), (transmax + 1), length=pixel_per_bump * (2 * transmax + 1))
+    y = range(-(longmax + 1), (longmax + 1), length=pixel_per_bump * (2 * longmax + 1))
+    X, Y = [x for x in x, y in y], [y for x in x, y in y]
+    Z = zeros(size(X))
+
+    Threads.@threads for n in -transmax:transmax
+        for m in -longmax:longmax
+            idx = to_1d_index(n, m, transmax, longmax)
+            amplitude = abs(u0[2+idx])
+            Z .+= amplitude * exp.(-((X .- n) .^ 2 .+ (Y .- m) .^ 2) / (2 * sigma^2))
+        end
+    end
+
+    plot_complex_mesh(x, y, Z; color=:viridis, xlabel=L"$\frac{k_x}{k_r}$", ylabel=L"$\frac{k_z}{k_r}$", xlims=(x[begin], x[end]), ylim=(y[begin], y[end]), kwargs...)
+end
