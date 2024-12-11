@@ -15,14 +15,15 @@ function safe_index_2D(vec::Vector{T}, n::Int, m::Int, transmax::Int, longmax::I
 end
 
 function multimomenta_model_drift!(du, u, p, t; P=0.0, ω_tilde=0.0, N_A=10^5, κ=8.1, E_0=40.0, ω_r=0.05, ϵ=0.0, longmax=10, transmax=10)
+    u[2:end] /= norm(u[2:end])
     ω_c = ω_tilde * E_0
     trans_sum_all = 0
     checker_board_all = 0
     for n in -transmax:transmax
         for m in -longmax:longmax
             mom_indx = to_1d_index(n, m, transmax, longmax)
-            trans_sum = safe_index_2D(u, n + 2, m, longmax, transmax) + safe_index_2D(u, n - 2, m, longmax, transmax)
-            long_sum = safe_index_2D(u, n, m + 2, longmax, transmax) + safe_index_2D(u, n, m - 2, longmax, transmax)
+            long_sum = safe_index_2D(u, n + 2, m, longmax, transmax) + safe_index_2D(u, n - 2, m, longmax, transmax)
+            trans_sum = safe_index_2D(u, n, m + 2, longmax, transmax) + safe_index_2D(u, n, m - 2, longmax, transmax)
             trans_sum_all += conj(trans_sum) * u[2+mom_indx]
             checker_board = safe_index_2D(u, n + 1, m + 1, longmax, transmax) +
                             safe_index_2D(u, n + 1, m - 1, longmax, transmax) +
@@ -33,27 +34,6 @@ function multimomenta_model_drift!(du, u, p, t; P=0.0, ω_tilde=0.0, N_A=10^5, �
         end
     end
     du[1] = ϵ - (κ + im * ω_c) * u[1] + im * E_0 * u[1] * trans_sum_all + im * E_0 * P * checker_board_all
-end
-
-function dispative_dynamics!(du, u, p, t; P=0.0, ω_tilde=0.0, N_A=10^5, κ=8.1, E_0=40.0, ω_r=0.05, longmax=10, transmax=10)
-    ω_c = ω_tilde * E_0
-    trans_sum_all = 0
-    checker_board_all = 0
-    for n in -transmax:transmax
-        for m in -longmax:longmax
-            mom_indx = to_1d_index(n, m, transmax, longmax)
-            trans_sum = safe_index_2D(u, n + 2, m, longmax, transmax) + safe_index_2D(u, n - 2, m, longmax, transmax)
-            long_sum = safe_index_2D(u, n, m + 2, longmax, transmax) + safe_index_2D(u, n, m - 2, longmax, transmax)
-            trans_sum_all += conj(trans_sum) * u[2+mom_indx]
-            checker_board = safe_index_2D(u, n + 1, m + 1, longmax, transmax) +
-                            safe_index_2D(u, n + 1, m - 1, longmax, transmax) +
-                            safe_index_2D(u, n - 1, m + 1, longmax, transmax) +
-                            safe_index_2D(u, n - 1, m - 1, longmax, transmax)
-            checker_board_all += conj(checker_board) * u[2+mom_indx]
-            du[2+mom_indx] = -ω_r * ((n^2 + m^2) * u[2+mom_indx] - conj(u[1]) * u[1] * long_sum - P * (u[1] + conj(u[1])) * checker_board - P^2 * trans_sum)
-        end
-    end
-    du[1] = -(κ + im * ω_c) * u[1] + im * E_0 * u[1] * trans_sum_all + im * E_0 * P * checker_board_all
 end
 
 function atomic_hamiltonian!(λ::T; P=0.0, ω_r=0.05, longmax=10, transmax=10) where {T}
@@ -75,16 +55,16 @@ function atomic_hamiltonian!(λ::T; P=0.0, ω_r=0.05, longmax=10, transmax=10) w
                 H[1+to_1d_index(n, m, transmax, longmax), 1+to_1d_index(n, m - 2, transmax, longmax)] = -ω_r * P^2
             end
             if n + 1 <= transmax && m + 1 <= longmax
-                H[1+to_1d_index(n, m, transmax, longmax), 1+to_1d_index(n + 1, m + 1, transmax, longmax)] = -ω_r * P * (conj(λ) + λ)
+                H[1+to_1d_index(n, m, transmax, longmax), 1+to_1d_index(n + 1, m + 1, transmax, longmax)] = -ω_r * (P * conj(λ) + conj(P) * λ)
             end
             if n + 1 <= transmax && m - 1 >= -longmax
-                H[1+to_1d_index(n, m, transmax, longmax), 1+to_1d_index(n + 1, m - 1, transmax, longmax)] = -ω_r * P * (conj(λ) + λ)
+                H[1+to_1d_index(n, m, transmax, longmax), 1+to_1d_index(n + 1, m - 1, transmax, longmax)] = -ω_r * (P * conj(λ) + conj(P) * λ)
             end
             if n - 1 >= -transmax && m + 1 <= longmax
-                H[1+to_1d_index(n, m, transmax, longmax), 1+to_1d_index(n - 1, m + 1, transmax, longmax)] = -ω_r * P * (conj(λ) + λ)
+                H[1+to_1d_index(n, m, transmax, longmax), 1+to_1d_index(n - 1, m + 1, transmax, longmax)] = -ω_r * (P * conj(λ) + conj(P) * λ)
             end
             if n - 1 >= -transmax && m - 1 >= -longmax
-                H[1+to_1d_index(n, m, transmax, longmax), 1+to_1d_index(n - 1, m - 1, transmax, longmax)] = -ω_r * P * (conj(λ) + λ)
+                H[1+to_1d_index(n, m, transmax, longmax), 1+to_1d_index(n - 1, m - 1, transmax, longmax)] = -ω_r * (P * conj(λ) + conj(P) * λ)
             end
         end
     end
@@ -98,7 +78,7 @@ function cavity_eq!(u; P=0.0, ω_tilde=0.0, N_A=10^5, κ=8.1, E_0=40.0, ω_r=0.0
     for n in -transmax:transmax
         for m in -longmax:longmax
             mom_indx = to_1d_index(n, m, transmax, longmax)
-            trans_sum = safe_index_2D(u, n + 2, m, longmax, transmax) + safe_index_2D(u, n - 2, m, longmax, transmax)
+            trans_sum = safe_index_2D(u, n, m + 2, longmax, transmax) + safe_index_2D(u, n, m - 2, longmax, transmax)
             trans_sum_all += conj(trans_sum) * u[2+mom_indx]
             checker_board = safe_index_2D(u, n + 1, m + 1, longmax, transmax) +
                             safe_index_2D(u, n + 1, m - 1, longmax, transmax) +
@@ -156,6 +136,79 @@ function find_steady_state(; P=0.0, ω_tilde=2.0, N_A=10^5, κ=8.1, E_0=40.0, ω
     vec = Array(eigvecs[eigen_index])
 
     return hcat([λ, vec...])[:, 1]
+end
+
+function find_steady_state_and_stability(; P=0.5, ω_tilde=1.5, N_A=10^5, κ=8.1, E_0=40.0, ω_r=0.05, longmax=2, transmax=2, eigen_index=1, λ0=3.0 + 3.0im)
+    u_end = find_steady_state(; P=P, ω_tilde, N_A=N_A, κ=κ, ω_r=ω_r, longmax=longmax, transmax=transmax, eigen_index=eigen_index, λ0=λ0)
+
+    function jacobian_multimomenta_model_drift!(J, u, p, t)
+        J .= ForwardDiff.jacobian(temp_u -> begin
+                uComplex = real_to_complex(temp_u)
+                du = similar(uComplex)
+                uComplex[2:end] /= norm(uComplex[2:end])
+                multimomenta_model_drift!(du, uComplex, p, t; P=P, ω_tilde=ω_tilde, N_A=N_A, κ=κ, E_0=E_0, ω_r=ω_r, longmax=longmax, transmax=transmax)
+                du[2:end] -= (du[2:end]' * uComplex[2:end]) / (uComplex[2:end]' * uComplex[2:end]) * uComplex[2:end]
+                return complex_to_real(du)
+            end, u)
+    end
+
+    # Calculate Jacobian at u_end
+    A = zeros(Float64, 2 * length(u_end), 2 * length(u_end))
+    jacobian_multimomenta_model_drift!(A, complex_to_real(u_end), nothing, 0.0)
+    eigenvalues = eigvals(A)
+    println(eigenvalues[real(eigenvalues).>=10^(-4)])
+    is_stable = all(real(eigenvalues) .< 10^(-3))
+    return u_end, is_stable
+end
+
+function check_tol(a::T, tol) where {T<:Number}
+    if abs(a) > tol
+        return a
+    end
+    return zero(T)
+end
+
+function find_image_projection(M; tol=1e-6)
+    U, s, Vt = svd(M)
+    non_zero_indeces = [i for i in 1:size(U, 2) if abs(s[i]) > tol]
+    return U[:, non_zero_indeces]
+end
+
+function gram_schmidt(V; tol=1e-6, check_from=2)
+    U = copy(V)
+    U[:, 1] /= norm(U[:, 1])
+    for i in check_from:size(V, 2)
+        U[:, i] -= U[:, 1:i-1] * (U[:, 1:i-1]' * U[:, i])
+        if norm(U[:, i]) > tol
+            U[:, i] /= norm(U[:, i])
+        else
+            U[:, i] .= 0.0
+        end
+    end
+    return U
+end
+
+function remove_zero_columns!(matrix; tol=1e-6)
+    non_zero_cols = [i for i in 1:size(matrix, 2) if norm(matrix[:, i]) > tol]
+    return matrix[:, non_zero_cols]
+end
+
+function controllable_subspace_projector(A, B; n=size(A, 2), tol=1e-6)
+    Pt = find_image_projection(Array(B); tol=tol)
+    B_curr = B
+    for i in 1:(n-1)
+        B_curr = A * B_curr
+        Pt = find_image_projection(Array(hcat(Pt, B_curr)); tol=tol)
+        if rank(Pt) == size(A, 1)
+            break
+        end
+    end
+    return Pt
+end
+
+function controllable(A, B; tol=1e-10)
+    Pt = controllable_subspace_projector(A, B; tol=tol)
+    return rank(Pt) == size(A, 1)
 end
 
 function complex_to_real(vec::Vector{Complex{T}}) where {T}
