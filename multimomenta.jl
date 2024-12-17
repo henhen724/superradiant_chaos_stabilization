@@ -1,4 +1,4 @@
-using DifferentialEquations, Plots, LaTeXStrings
+using DifferentialEquations, Plots, LaTeXStrings, LinearAlgebra
 include("multimomenta_lib.jl")
 
 function run_dynamics_with_hetero(P, ω_tilde; N_A=10^5, κ=8.1, E_0=40.0, ω_r=0.05, longmax=10, transmax=10)
@@ -10,8 +10,7 @@ function run_dynamics_with_hetero(P, ω_tilde; N_A=10^5, κ=8.1, E_0=40.0, ω_r=
     u0[2+to_1d_index(0, 1, transmax, longmax)] = 0.0
     u0[2+to_1d_index(-1, 0, transmax, longmax)] = 0.0
     u0[2+to_1d_index(0, -1, transmax, longmax)] = 0.0
-    norm = sum(abs.(u0[2:end]) .^ 2)
-    u0[2:end] = u0[2:end] / sqrt(norm)
+    u0[2:end] = u0[2:end] / norm(u0[2:end])
 
     noise_prototype = zeros(ComplexF64, (vec_dim, 2)) #hetrodyne
     noise = RealWienerProcess!(0.0, zeros(2), zeros(2), save_everystep=false)
@@ -62,7 +61,7 @@ function run_dynamics_no_meas(P, ω_tilde; N_A=10^5, κ=8.1, E_0=40.0, ω_r=0.05
 end
 
 Ps = [0.238, 0.367, 0.450, 0.533, 0.617, 0.700]
-ω_tildes = [1.880, 1.520, 1.170, 0.825, 0.475, 0.125]
+ω_tildes = [2.5, 2.25, 2.0, 1.880, 1.520, 1.170, 0.825, 0.475, 0.125]
 P = Ps[4]
 ω_tilde = ω_tildes[2]
 sol = run_dynamics_with_hetero(P, ω_tilde; N_A=10^5)
@@ -109,13 +108,13 @@ plot_list = []
 
 for ω_tilde in ω_tildes
     for P in Ps
-        sol = run_dynamics_with_hetero(P, ω_tilde)
+        sol = run_dynamics_no_meas(P, ω_tilde)
         p = scatter(map(x -> real(x[1]), sol.u), map(x -> imag(x[1]), sol.u), zcolor=sol.t, xlims=(-8, 8), ylims=(-8, 8), colormap=:viridis, markerstrokewidth=0, markersize=0.8, label="P=$(P), ω=$(ω_tilde)", colorbar=false)
         push!(plot_list, p)
     end
 end
 
-combined_plot = plot(plot_list..., layout=(length(Ps), length(ω_tildes)), size=(2600, 1600))
+combined_plot = plot(plot_list..., layout=(length(ω_tildes), length(Ps)), size=(2600, 2000))
 xaxis!(combined_plot, L"Re[\lambda]")
 yaxis!(combined_plot, L"Im[\lambda]")
 savefig(combined_plot, "traj_buildup_combined_plot.png")

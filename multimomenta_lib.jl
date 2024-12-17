@@ -112,8 +112,7 @@ function find_steady_state(; P=0.0, ω_tilde=2.0, N_A=10^5, κ=8.1, E_0=40.0, ω
         u0[1+to_1d_index(0, 1, transmax, longmax)] = 0.0
         u0[1+to_1d_index(-1, 0, transmax, longmax)] = 0.0
         u0[1+to_1d_index(0, -1, transmax, longmax)] = 0.0
-        u0norm = sum(abs.(u0[2:end]) .^ 2)
-        u0 = u0 / sqrt(u0norm)
+        u0 /= norm(u0)
     end
 
     function f(dx, x, p)
@@ -123,8 +122,8 @@ function find_steady_state(; P=0.0, ω_tilde=2.0, N_A=10^5, κ=8.1, E_0=40.0, ω
         complex_to_real(dx, dλ)
     end
 
-    prob = NonlinearProblem(f, complex_to_real([λ0]), nothing; abstol=1e-3, reltol=1e-3)
-    sol = solve(prob, RobustMultiNewton(; autodiff=AutoFiniteDiff()); abstol=1e-5)
+    prob = NonlinearProblem(f, complex_to_real([λ0]), nothing; abstol=1e-6, reltol=1e-6)
+    sol = solve(prob, RobustMultiNewton(; autodiff=AutoFiniteDiff()); abstol=1e-6)
 
     @assert sol.retcode == ReturnCode.Success
 
@@ -156,9 +155,9 @@ function find_steady_state_and_stability(; P=0.5, ω_tilde=1.5, N_A=10^5, κ=8.1
     A = zeros(Float64, 2 * length(u_end), 2 * length(u_end))
     jacobian_multimomenta_model_drift!(A, complex_to_real(u_end), nothing, 0.0)
     eigenvalues = eigvals(A)
-    println(eigenvalues[real(eigenvalues).>=10^(-4)])
-    is_stable = all(real(eigenvalues) .< 10^(-3))
-    return u_end, is_stable
+    println(eigenvalues[real(eigenvalues).>=10^(-6)])
+    is_stable = all(real(eigenvalues) .< 10^(-5))
+    return u_end, is_stable, maximum(real.(eigenvalues))
 end
 
 function check_tol(a::T, tol) where {T<:Number}
