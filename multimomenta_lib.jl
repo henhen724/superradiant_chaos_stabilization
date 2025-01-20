@@ -155,8 +155,8 @@ function find_steady_state_and_stability(; P=0.5, ω_tilde=1.5, N_A=10^5, κ=8.1
     A = zeros(Float64, 2 * length(u_end), 2 * length(u_end))
     jacobian_multimomenta_model_drift!(A, complex_to_real(u_end), nothing, 0.0)
     eigenvalues = eigvals(A)
-    println(eigenvalues[real(eigenvalues).>=10^(-6)])
-    is_stable = all(real(eigenvalues) .< 10^(-5))
+    # println(eigenvalues[real(eigenvalues).>=10^(-6)])
+    is_stable = all(real(eigenvalues) .< 10^(-6))
     return u_end, is_stable, maximum(real.(eigenvalues))
 end
 
