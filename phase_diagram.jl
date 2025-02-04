@@ -8,12 +8,12 @@ E_0 = 40.0
 longmax = 10
 transmax = 10
 
-Ps = LinRange(0.0, 1.0, 20)
-ω_tildes = LinRange(0.0, 6.0, 20)
+Ps = LinRange(0.0, 1.0, 13)
+ω_tildes = LinRange(0.0, 6.0, 13)
 
 function scan_lambda0(P, ω_tilde; N_A=10^5, κ=8.1, ω_r=0.05, longmax=10, transmax=10)
-    λ0_real_values = LinRange(-3.0, 3.0, 10)
-    λ0_imag_values = LinRange(-3.0, 3.0, 10)
+    λ0_real_values = LinRange(-3.0, 3.0, 5)
+    λ0_imag_values = LinRange(-3.0, 3.0, 5)
     λ0_values = [re_p + im_p * im for re_p in λ0_real_values, im_p in λ0_imag_values]
     results = []
     for λ0 in λ0_values
