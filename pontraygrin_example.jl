@@ -8,16 +8,16 @@ gradgradf(x) = -2 * exp(-x^2) + 4x^2 * exp(-x^2)
 # Define the ODE
 function ode!(du, u, p, t)
     x, λ = u
-    du[1] = gradf(x) - λ / 2
-    du[2] = (λ - 2 * gradf(x)) * gradgradf(x)
+    du[1] = -2x * exp(-x^2) - λ / 2
+    du[2] = (λ - 4x * exp(-x^2)) * (-2 * exp(-x^2) + 4x^2 * exp(-x^2))
 end
 
-u0 = [1.0, -0.1]
-tspan = (0.0, 20.0)
+u0 = [1.0, 0.1]
+tspan = (0.0, 10.0)
 
-function bc1!(residual, sol, p, t)
-    residual[1] = sol(0.0)[1] - 1.0 # the solution at the middle of the time span should be -pi/2
-    residual[2] = sol(tspan[2])[2]
+function bc1!(residual, u, p, t)
+    residual[1] = u[begin][1] - 1.0 # the solution at the middle of the time span should be -pi/2
+    residual[2] = u[end][2]
 end
 
 # Initial conditions
@@ -30,4 +30,4 @@ sol = solve(prob, MIRK4(), dt=0.01)
 # Plot the results
 plot(sol, idxs=(0, 1), label="x(t)", xlabel="t", ylabel="x")
 plot!(sol.t, -map(x -> x[2], sol.u) / 2, label="u(t) = -λ(t)/2", xlabel="t", ylabel="u")
-plot(x -> -(2x * exp(-x^2))^2)
+plot(x -> -(2x * exp(-x^2))^2, xlims=(-1.2, 1.2))
