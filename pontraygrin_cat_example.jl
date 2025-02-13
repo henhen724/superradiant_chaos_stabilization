@@ -137,9 +137,33 @@ function gradient!(G, x)
 end
 
 # Optimize using BFGS
+# Initialize array to store control histories
+control_history = Vector{Matrix{Float64}}()
+push!(control_history, copy(controls))
+
+function callback(x)
+    # Store current controls
+    println(x.metadata["time"])
+    push!(control_history, copy(reshape(x, size(controls))))
+    return false
+end
+
 maxiters = 1000
 result = optimize(objective, gradient!, vec(controls), LBFGS(),
-    Optim.Options(iterations=maxiters, g_tol=1e-3, show_trace=true, show_every=10))
+    Optim.Options(iterations=maxiters, g_tol=1e-3, show_trace=true, show_every=10, callback=callback))
+
+# Create animation
+anim = @animate for i in 1:length(control_history)
+    plot(sol_forward.t[1:size(controls, 2)],
+        [control_history[i][j, :] for j in 1:length(H_list)]...,
+        xaxis="Time",
+        yaxis="Control amplitude",
+        label=permutedims(control_labels),
+        title="Control amplitudes (iteration $i)",
+        legend=:outertopright)
+end
+
+gif(anim, "control_convergence.gif", fps=10)
 
 # Update controls with optimized result
 controls[:] = reshape(Optim.minimizer(result), size(controls))
