@@ -16,10 +16,10 @@ S_y = sigmay(basis)
 
 ω_z = 0.012 # MHz
 H_0 = ω_z * S_z
-H_list = [(S_x^2).data, S_x.data, (S_z^2).data, S_z.data]
-control_labels = [L"S_x^2", L"S_x", L"S_z^2", L"S_z"]
+H_list = [(S_x^2).data, S_x.data, S_z.data]
+control_labels = [L"S_x^2", L"S_x", L"S_z"]
 controls = cumsum(randn(Float64, length(H_list), num_steps) * sqrt(dt), dims=2)
-control_cost = [1.0, 1.0, 1.0, 1.0]
+control_cost = [1.0, 1.0, 1.0]
 
 # Initial wave functions
 ψ0 = exp(-im * (0.01 * π / 4) * S_x) * spindown(basis)
@@ -98,11 +98,6 @@ function optimize_controls_duration!(controls, sol_forward, target_d, ψ0_d, dt,
     return controls
 end
 
-sol_forward = nothing
-sol_backward = nothing
-maxiters = 200
-cost_tol = 0.01
-last_cost = Inf
 # GRAPE algorithm
 # Define the objective function for Optim
 function objective(x)
@@ -116,9 +111,16 @@ function objective(x)
     return total_cost_function(sol_forward, target_d)
 end
 
-# Define the gradient function for Optim
+control_history = Vector{Matrix{Float64}}()
+push!(control_history, copy(controls))
+global grad_count = 0
+
 function gradient!(G, x)
+    # global grad_count += 1
     controls_reshaped = reshape(x, size(controls))
+    # if grad_count % 250 == 0
+    #     push!(control_history, copy(controls_reshaped))
+    # end
 
     # Forward evolution
     prob_forward = ODEProblem(schrodinger!, ψ0_d, (0.0, T_final), controls_reshaped)
@@ -137,33 +139,9 @@ function gradient!(G, x)
 end
 
 # Optimize using BFGS
-# Initialize array to store control histories
-control_history = Vector{Matrix{Float64}}()
-push!(control_history, copy(controls))
-
-function callback(x)
-    # Store current controls
-    println(x.metadata["time"])
-    push!(control_history, copy(reshape(x, size(controls))))
-    return false
-end
-
-maxiters = 1000
+maxiters = 10000
 result = optimize(objective, gradient!, vec(controls), LBFGS(),
-    Optim.Options(iterations=maxiters, g_tol=1e-3, show_trace=true, show_every=10, callback=callback))
-
-# Create animation
-anim = @animate for i in 1:length(control_history)
-    plot(sol_forward.t[1:size(controls, 2)],
-        [control_history[i][j, :] for j in 1:length(H_list)]...,
-        xaxis="Time",
-        yaxis="Control amplitude",
-        label=permutedims(control_labels),
-        title="Control amplitudes (iteration $i)",
-        legend=:outertopright)
-end
-
-gif(anim, "control_convergence.gif", fps=10)
+    Optim.Options(g_tol=1e-3, show_trace=true, iterations=maxiters))
 
 # Update controls with optimized result
 controls[:] = reshape(Optim.minimizer(result), size(controls))
@@ -171,6 +149,19 @@ controls[:] = reshape(Optim.minimizer(result), size(controls))
 # Final forward evolution for plotting
 prob_forward = ODEProblem(schrodinger!, ψ0_d, (0.0, T_final), controls)
 sol_forward = solve(prob_forward, Tsit5(); saveat=0:dt:T_final)
+
+# Create animation
+anim = @animate for i in 1:length(control_history)
+    plot(sol_forward.t[1:size(controls, 2)],
+        [control_history[i][j, :] for j in 1:length(H_list)],
+        xaxis="Time",
+        yaxis="Control amplitude",
+        label=permutedims(control_labels),
+        title="Control amplitudes (iteration $i)",
+        legend=:outertopright)
+end
+
+gif(anim, "3control_convergence.gif", fps=10)
 
 # Final backward evolution for gradient plotting
 λT = 2 * target_d * conj(transpose(target_d)) * sol_forward.u[end]
@@ -192,16 +183,18 @@ states = states ./ expect(idOp, states)
 # Plot the fidelity against the target state over time
 plot(sol_forward.t, real.(expect(dm(target), states)), xlabel="Time", ylabel="Fidelity", label="Fidelity", title="Fidelity of Cat State over Time")
 
-fig = plot()
+fig = plot(dpi=400)
 plot!(fig, sol_forward.t, real.(expect(S_x, states)), xlabel="Time", ylabel="Expectation value", label=L"S_x", title="Evolution under control")
 plot!(fig, sol_forward.t, real.(expect(S_y, states)), xlabel="Time", ylabel="Expectation value", label=L"S_y")
 plot!(fig, sol_forward.t, real.(expect(S_z, states)), xlabel="Time", ylabel="Expectation value", label=L"S_z")
+savefig(fig, "2controlexpectations.png")
 display(fig)
 
-fig = plot()
+fig = plot(dpi=400)
 for i in 1:length(H_list)
     plot!(fig, sol_forward.t[1:size(controls, 2)], controls[i, :], xaxis="Time", yaxis="Control amplitude", label="Control $(control_labels[i])", title="Control amplitudes over time")
 end
+savefig(fig, "2controls.png")
 display(fig)
 
 
