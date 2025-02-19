@@ -1,4 +1,4 @@
-using QuantumOptics, ForwardDiff, Plots, Optim
+using QuantumOptics, Plots, Optim, Zygote
 
 # Define the cutoff for the Fock space
 Nfock = 4
@@ -21,24 +21,33 @@ end
 a_op = mb(destroy(b_fock), 1, [b_fock, b_spin])
 σ_minus = mb(sigmam(b_spin), 2, [b_fock, b_spin])
 
+function adj(A)
+    function commutator(X)
+        return A * X - X * A
+    end
+    return LinearOperator(commutator, size(A))
+end
+
+function expm_der(A, B; N_cutoff=10)
+    expA = exp(A)
+    curr_op = B
+    factorial = 1
+    result = B
+
+    for n in 1:N_cutoff
+        factorial *= n + 1
+        curr_op = A * curr_op - curr_op * A
+        result += curr_op / factorial
+    end
+
+    return expA * result
+end
+
 # Function to create a displacement operator
 function displacement(alpha, a_op)
     return exp(-im * (conj(alpha) * a_op + alpha * dagger(a_op)))
 end
 
-# Function to calculate the finite difference gradient of the displacement operator
-function finite_difference_gradient(alpha, a_op, h=1e-5)
-    D_op = displacement(alpha, a_op)
-    D_op_plus = displacement(alpha + h, a_op)
-    D_op_minus = displacement(alpha - h, a_op)
-    grad_real = (D_op_plus - D_op_minus) / (2 * h)
-
-    D_op_plus_im = displacement(alpha + im * h, a_op)
-    D_op_minus_im = displacement(alpha - im * h, a_op)
-    grad_imag = (D_op_plus_im - D_op_minus_im) / (2 * h)
-
-    return grad_real, grad_imag
-end
 
 # Example usage of the finite difference gradient function
 alpha = 0.1 + 0.1im
@@ -89,8 +98,8 @@ function calculate_grape_gradient(ρ_t, σ_t, alphas, betas)
         U_q = displacement(alphas[i], σ_minus / 2)
 
         # Calculate the derivative of the unitary with respect to the real part of the displacement parameter
-        dU_qc_dbeta = (-im * betas[i] * a_op * dagger(σ_minus) / 2) * displacement(betas[i], dagger(a_op) * σ_minus / 2)
-        dU_q_dalpha = (-im * dagger(σ_minus) / 2) * displacement(alphas[i], σ_minus / 2)
+        dU_qc_dbeta = expm_der(-im * betas[i] * a_op * dagger(σ_minus) / 2, -im * a_op * dagger(σ_minus) / 2)
+        dU_q_dalpha = expm_der(-im * alphas[i] * dagger(σ_minus) / 2, -im * dagger(σ_minus) / 2)
 
         commutator = dU_qc_dbeta * ρ_t[i] - ρ_t[i] * dU_qc_dbeta
         beta_grad[i] = tr(dagger(σ_t[i+1]) * commutator)
