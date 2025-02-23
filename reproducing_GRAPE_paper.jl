@@ -15,7 +15,7 @@ full_basis = tensor(bases...)
 
 # Function to tensor an operator with identity operators in all other bases
 function mb(op, index, bases)
-    ops = [index == i ? op : identityoperator(bases[i]) for i in 1:length(bases)]
+    ops = [index == i ? op : identityoperator(bases[i]) for i in eachindex(bases)]
     return tensor(ops...)
 end
 
@@ -23,15 +23,11 @@ end
 a_op = mb(destroy(b_fock), 1, [b_fock, b_spin])
 σ_minus = mb(sigmam(b_spin), 2, [b_fock, b_spin])
 
-function adj(A)
-    function commutator(X)
-        return A * X - X * A
-    end
-    return LinearOperator(commutator, size(A))
+function expm(A; N_cutoff=20)
+    return sum([A^n / factorial(n) for n in 0:N_cutoff])
 end
 
 function expm_der(A, B; N_cutoff=20)
-    expA = exp(A)
     curr_op = B
     factorial = 1
     result = B
@@ -42,18 +38,23 @@ function expm_der(A, B; N_cutoff=20)
         result += curr_op / factorial
     end
 
-    return expA * result
+    return result * exp(A)
 end
 
 # Function to create a displacement operator
-function displacement(alpha, a_op)
+function displacement(params, a_op)
+    alpha = complex(params[1], params[2])
     return exp(-im * (conj(alpha) * a_op + alpha * dagger(a_op)))
 end
 
-U_q = Gate((params) -> displacement(params[1] + im * params[2], σ_minus / 2), 2, "U_q")
-U_qc = Gate((params) -> displacement(params[1] + im * params[2], dagger(a_op) * σ_minus / 2), 2, "U_qc")
+function displacement(alpha::Complex, a_op)
+    return exp(-im * (conj(alpha) * a_op + alpha * dagger(a_op)))
+end
 
-UnitCircuit = QuantumCircuit(repeat([U_q, U_qc], outer=3))
+function displacement_dparam(params, a_op)
+    alpha = complex(params[1], params[2])
+    return [-im * expm_der(-im * (conj(alpha) * a_op + alpha * dagger(a_op)), a_op + dagger(a_op)), expm_der(-im * (conj(alpha) * a_op + alpha * dagger(a_op)), -a_op + dagger(a_op))]
+end
 
 function op_evolution(op_0, alphas, betas)
     op_t = [op_0]
@@ -87,6 +88,14 @@ function optimize_grape(num_steps, initial_state, target_state; seed=nothing)
         alpha_grad = zeros(eltype(alphas), length(alphas))
         beta_grad = zeros(eltype(betas), length(betas))
         for i in eachindex(alphas)
+            alpha = alphas[i]
+            beta = betas[i]
+            U_qc = displacement(beta, dagger(a_op) * σ_minus / 2)
+            U_q = displacement(alpha, σ_minus / 2)
+            dU_qc = displacement_dparam([real(beta), imag(beta)], dagger(a_op) * σ_minus / 2)
+            dU_q = displacement_dparam([real(alpha), imag(alpha)], σ_minus / 2)
+            alpha_grad[i] = -real(tr(dagger(σ_t[i+1]) * U_qc * (dU_q[1] + im * dU_q[2]) * ρ_t[i] * dagger(U_q) * dagger(U_qc))) - real(tr(dagger(σ_t[i+1]) * U_qc * U_q * ρ_t[i] * dagger(dU_q[1] - im * dU_q[2]) * dagger(U_qc)))
+            beta_grad[i] = -real(tr(dagger(σ_t[i+1]) * (dU_qc[1] + im * dU_qc[2]) * U_q * ρ_t[i] * dagger(U_q) * dagger(U_qc))) - real(tr(dagger(σ_t[i+1]) * U_qc * U_q * ρ_t[i] * dagger(U_q) * dagger(dU_qc[1] - im * dU_qc[2])))
             function cost(alpha, beta)
                 U_qc = displacement(beta, dagger(a_op) * σ_minus / 2)
                 U_q = displacement(alpha, σ_minus / 2)
@@ -132,21 +141,37 @@ function optimize_grape(num_steps, initial_state, target_state; seed=nothing)
     return optimized_alphas, optimized_betas
 end
 
-
 init_state = tensor(fockstate(b_fock, 0), spindown(b_spin))
 targ_state = tensor(fockstate(b_fock, 3), spindown(b_spin))
 
-# Check that op_evolution and the evolve QuantumCircuit result in the same thing
+optimized_alphas, optimized_betas = optimize_grape(3, init_state, targ_state)
 
-# Define the parameters for the QuantumCircuit
-c_params::Vector{Vector{Float64}} = []
-for i in eachindex(optimized_alphas)
-    push!(c_params, [real(optimized_alphas[i]), imag(optimized_alphas[i])])
-    push!(c_params, [real(optimized_betas[i]), imag(optimized_betas[i])])
-end
+ρ_t = op_evolution(dm(init_state), optimized_alphas, optimized_betas)
+
+ρ_t_boson = [ptrace(ρ, 2) for ρ in ρ_t]
+ρ_t_spin = [ptrace(ρ, 1) for ρ in ρ_t]
+
+plot_wigner(ρ_t_boson[end])
+
+# Check that op_evolution and the evolve QuantumCircuit result in the same thing
+U_q = Gate(params -> displacement(params, σ_minus / 2), params -> displacement_dparam(params, σ_minus / 2), 2, "U_q")
+U_qc = Gate(params -> displacement(params, dagger(a_op) * σ_minus / 2), params -> displacement_dparam(params, dagger(a_op) * σ_minus / 2), 2, "U_qc")
+
+UnitCircuit = QuantumCircuit(repeat([U_q, U_qc], outer=3))
+
+fidelity = Cost((params, ρ) -> 0, ρ -> 1 - real(tr(dagger(dm(targ_state)) * ρ)), (params, ρ) -> 0 * ρ, ρ -> -dm(targ_state), (params, ρ) -> real.(0 * params))
+
+params = GRAPE(dm(init_state), UnitCircuit, fidelity)
+
+# # Define the parameters for the QuantumCircuit
+# c_params::Vector{Vector{Float64}} = []
+# for i in eachindex(optimized_alphas)
+#     push!(c_params, [real(optimized_alphas[i]), imag(optimized_alphas[i])])
+#     push!(c_params, [real(optimized_betas[i]), imag(optimized_betas[i])])
+# end
 
 # Evolve the initial state using the QuantumCircuit
-ρ_final, ρ_t, measment_record = evolve(dm(init_state), UnitCircuit, c_params)
+ρ_t, measment_record = evolve(dm(init_state), UnitCircuit, params)
 
 # Evolve the initial state using the op_evolution function
 op_evolution_result = op_evolution(dm(init_state), optimized_alphas, optimized_betas)
@@ -161,12 +186,3 @@ println(op_evolution_result[end])
 # Check if the final states are approximately equal
 println("Are the final states approximately equal?")
 println(isapprox(ρ_t[end], op_evolution_result[end], atol=1e-5))
-
-optimized_alphas, optimized_betas = optimize_grape(3, init_state, targ_state)
-
-ρ_t = op_evolution(dm(init_state), optimized_alphas, optimized_betas)
-
-ρ_t_boson = [ptrace(ρ, 2) for ρ in ρ_t]
-ρ_t_spin = [ptrace(ρ, 1) for ρ in ρ_t]
-
-plot_wigner(ρ_t_boson[end])

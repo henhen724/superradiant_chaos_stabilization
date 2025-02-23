@@ -48,9 +48,9 @@ end
 
 phases = Matrix{Union{Nothing,Phase}}(nothing, length(Ps), length(ω_tildes))
 
-Threads.@threads for i in 1:length(Ps)
+Threads.@threads for i in eachindex(Ps)
     P = Ps[i]
-    for j in 1:length(ω_tildes)
+    for j in eachindex(ω_tildes)
         ω_tilde = ω_tildes[j]
         try
             results = scan_lambda0(P, ω_tilde)

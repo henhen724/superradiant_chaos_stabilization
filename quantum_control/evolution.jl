@@ -3,7 +3,8 @@
 import QuantumOptics: Operator
 
 struct Gate
-    func::Function #Vector{<:Number} -> Vector{Tuple{Operator,<:Number}}
+    func::Function #Vector{<:Number} -> Operator
+    dfunc_dparam::Union{Function,Nothing} #Vector{<:Number} -> Vector{Operator}
     num_params::Int
     name::Union{String,Nothing}
 end
@@ -11,6 +12,7 @@ end
 
 struct Measurement
     func::Function #Vector{<:Number} -> Vector{Tuple{Operator,<:Number}}
+    dfunc_dparam::Union{Function,Nothing} #Vector{<:Number} -> Vector{Vector{Tuple{Operator,<:Number}}}
     num_params::Int
     name::Union{String,Nothing}
 end
@@ -54,77 +56,38 @@ function evolve(density_matrix, circuit::QuantumCircuit, params::Vector{Vector{F
             push!(timeseries, copy(density_matrix))
         end
     end
-    return density_matrix, timeseries, measurement_record
+    return timeseries, measurement_record
 end
 
 struct Cost
-    integrated_cost::Function
-    terminal_cost::Function
-    grad_integrated_cost::Function
-    grad_terminal_cost::Function
+    integrated_cost::Function # (param, ρ) -> <:Number
+    terminal_cost::Function # ρ -> <:Number
+    d_integrated_cost_dρ::Function # (param, ρ) -> Matrix
+    d_terminal_cost_dρ::Function # ρ -> Matrix
+    d_integrated_cost_dparams::Function # (param, ρ) -> Vector
 end
 
-function reshape_to_params_vector(flat_params, num_params_vec)
-    params = []
-    num_of_params_so_far = 0
-    for num_params in num_params_vec
-        push!(params, view(flat_params, num_of_params_so_far:num_of_params_so_far+num_params))
-        num_of_params_so_far += num_params
-    end
-    return params
-end
+using ForwardDiff, FiniteDiff
 
-function GRAPE(density_matrix, circuit::QuantumCircuit, cost::Cost; seed=nothing)
-    Random.seed!(seed)
-    inital_params = [2 * π * randn(ele.num_params) for ele in circuit.elements]
-    function objective(x)
-        params = reshape_to_params_vector(x, [ele.num_params for ele in circuit.elements])
-        ρ_t, _, _ = evolve(density_matrix, circuit, params)
-        integrated_cost_sum = sum(cost.integrated_cost(ρ) for ρ in ρ_t)
-        terminal_cost_value = cost.terminal_cost(ρ_t[end])
-        return integrated_cost_sum + terminal_cost_value
+function Cost(integrated_cost::Function, terminal_cost::Function; autodiff=true)
+    vec_integrated_cost = (param, ρ_vec, size) -> integrated_cost(param, reshape(ρ_vec, size))
+    vec_terminal_cost = (ρ_vec, size) -> terminal_cost(reshape(ρ_vec, size))
+    if autodiff
+        d_integrated_cost_dρ = (param, ρ) -> reshape(ForwardDiff.gradient(ρ_vec -> vec_integrated_cost(param, ρ_vec, size(ρ)), reshape(dense(ρ.data), length(ρ.data))), size(ρ))
+        d_terminal_cost_dρ = ρ -> reshape(ForwardDiff.gradient(ρ_vec -> vec_terminal_cost(param, ρ_vec, size(ρ)), reshape(dense(ρ.data), length(ρ.data))), size(ρ))
+        d_integrated_cost_dparams = (param, ρ) -> ForwardDiff.gradient(param_vec -> integrated_cost(param_vec, ρ), param)
     end
-    end
-
-    function gradient!(G, x)
-        ρ_t, _, measurement_record = evolve(density_matrix, circuit, reshape_to_params_vector(x, [ele.num_params for ele in circuit.elements]))
-        σ_t = co_evolve(ρ_t, measurement_record, cost, circuit, reshape_to_params_vector(x, [ele.num_params for ele in circuit.elements]))
-        grad = reshape_to_params_vector(G, [ele.num_params for ele in circuit.elements])
-        for (i, element) in enumerate(circuit.elements)
-            param = reshape_to_params_vector(x, [ele.num_params for ele in circuit.elements])[i]
-            if element isa Gate
-                gate = element.func(param)
-                grad[i] .= 2 * real.(tr(dagger(gate) * σ_t[i+1] * gate * ρ_t[i] - σ_t[i+1] * gate * ρ_t[i] * dagger(gate)))
-            elseif element isa Measurement
-                Kraus_ops = element.func(param)
-                if averaged
-                    for (op, label) in Kraus_ops
-                        grad[i] .= grad[i] .+ 2 * real.(tr(dagger(op) * σ_t[i+1] * op * ρ_t[i] - σ_t[i+1] * op * ρ_t[i] * dagger(op)))
-                    end
-                else
-                    selected_op, label = Kraus_ops[measurement_record[i][2]]
-                    grad[i] .= 2 * real.(tr(dagger(selected_op) * σ_t[i+1] * selected_op * ρ_t[i] - σ_t[i+1] * selected_op * ρ_t[i] * dagger(selected_op)))
-                end
-            else
-                error("Unknown element type in quantum circuit")
-            end
-        end
-    end
-
-    x0 = vcat(inital_params...)
-    result = optimize(objective, gradient!, x0, LBFGS(), Optim.Options(g_tol=1e-5, show_trace=true, iterations=1000))
-
-    result.minimizer
+    return Cost(integrated_cost, terminal_cost, d_integrated_cost_dρ, d_terminal_cost_dρ, d_integrated_cost_dparams)
 end
 
 function co_evolve(ρ_t, measurement_record, cost::Cost, circuit::QuantumCircuit, params::Vector{Vector{Float64}})
     σ_t = [0 * ρ for ρ in ρ_t]
-    σ_t[end] = cost.grad_terminal_cost(ρ_t[end])
+    σ_t[end] = cost.d_terminal_cost_dρ(ρ_t[end])
     for (i, element) in reverse(collect(enumerate(circuit.elements)))
         param = params[i]
         if element isa Gate
             gate = element.func(param)
-            σ_t[i] = dagger(gate) * σ_t[i+1] * gate + cost.grad_integrated_cost(ρ_t[i+1])
+            σ_t[i] = dagger(gate) * σ_t[i+1] * gate
         elseif element isa Measurement
             Kraus_ops = element.func(params)
             println("TODO measurement costate not yet added")
@@ -133,16 +96,87 @@ function co_evolve(ρ_t, measurement_record, cost::Cost, circuit::QuantumCircuit
                 for (op, label) in Kraus_ops
                     new_density_matrix += dagger(op) * σ_t[i+1] * op
                 end
-                σ_t[i] = new_density_matrix + cost.grad_integrated_cost(ρ_t[i+1])
+                σ_t[i] = new_density_matrix
             else
-                selected_op, label = findfirst(Kraus_ops[measurement_record[i][2]])
+                selected_op, label = Kraus_ops[measurement_record[i][2]]
                 σ_t[i] = dagger(selected_op) * σ_t[i+1] * selected_op / (probabilites[rand_index]) - dagger(selected_op) * selected_op * tr(dagger(selected_op) * σ_t[i+1] * selected_op * ρ_t[i]) / (probabilites[rand_index])^2
             end
         else
             error("Unknown element type in quantum circuit")
         end
+        σ_t[i] = σ_t[i] + cost.d_integrated_cost_dρ(param, ρ_t[i+1])
     end
     return σ_t
+end
+
+function calculate_param_gradients(grad, ρ_t, σ_t, cost::Cost, circuit::QuantumCircuit, params::Vector{Vector{Float64}}; averaged=false)
+    for (i, element) in enumerate(circuit.elements)
+        param = params[i]
+        if element isa Gate
+            if isa(element.dfunc_dparam, Nothing)
+                error("Unimplimented") # TODO
+            # grad[i] .= FiniteDiff.finite_difference_gradient(param -> 1 - real(tr(dagger(σ_t[i+1]) * element.func(param) * ρ_t[i] * dagger(element.func(param)))))
+            else
+                gate = element.func(param)
+                dgate = element.dfunc_dparam(param)
+                for j in eachindex(dgate)
+                    grad[i][j] = 2 * real.(tr(dagger(σ_t[i+1]) * gate * ρ_t[i] * dagger(dgate[j])) + tr(dagger(σ_t[i+1]) * dgate[j] * ρ_t[i] * dagger(gate)))
+                end
+            end
+        elseif element isa Measurement
+            error("Unimplimented TODO") # TODO
+        # Kraus_ops = element.func(param)
+        # dKraus_ops = element.dfunc_dparam
+        # if averaged
+        #     for (op, label) in Kraus_ops
+        #         grad[i] .= grad[i] .+ 2 * real.(tr(dagger(op) * σ_t[i+1] * op * ρ_t[i] - σ_t[i+1] * op * ρ_t[i] * dagger(op)))
+        #     end
+        # else
+        #     selected_op, label = Kraus_ops[measurement_record[i][2]]
+        #     grad[i] .= 2 * real.(tr(dagger(selected_op) * σ_t[i+1] * selected_op * ρ_t[i] - σ_t[i+1] * selected_op * ρ_t[i] * dagger(selected_op)))
+        # end
+        else
+            error("Unknown element type in quantum circuit")
+        end
+        grad[i] += cost.d_integrated_cost_dparams(param, ρ_t[i])
+    end
+end
+
+function reshape_to_params_vector(flat_params, num_params_vec)
+    params::Vector{Vector{eltype(flat_params)}} = []
+    num_of_params_so_far = 0
+    for num_params in num_params_vec
+        push!(params, view(flat_params, num_of_params_so_far+1:num_of_params_so_far+num_params))
+        num_of_params_so_far += num_params
+    end
+    return params
+end
+
+function GRAPE(ρ_0, circuit::QuantumCircuit, cost::Cost; seed=nothing)
+    Random.seed!(seed)
+    inital_params = [2 * π * randn(Float64, ele.num_params) for ele in circuit.elements]
+    num_params_vec = [ele.num_params for ele in circuit.elements]
+    function objective(x)
+        params = reshape_to_params_vector(x, num_params_vec)
+        ρ_t, _ = evolve(ρ_0, circuit, params)
+        integrated_cost_sum = sum(cost.integrated_cost(params[i], ρ) for (i, ρ) in enumerate(ρ_t[begin:end-1]))
+        terminal_cost_value = cost.terminal_cost(ρ_t[end])
+        return integrated_cost_sum + terminal_cost_value
+    end
+
+    function gradient!(G, x)
+        params = reshape_to_params_vector(x, num_params_vec)
+        ρ_t, _ = measurement_record = evolve(ρ_0, circuit, params)
+        σ_t = co_evolve(ρ_t, measurement_record, cost, circuit, params)
+        grad = [zeros(Float64, ele.num_params) for ele in circuit.elements]
+        calculate_param_gradients(grad, ρ_t, σ_t, cost, circuit, params)
+        G .= vcat(grad...)
+    end
+
+    x0 = vcat(inital_params...)
+    result = optimize(objective, gradient!, x0, LBFGS(), Optim.Options(g_tol=1e-5, show_trace=true, iterations=1000))
+
+    return reshape_to_params_vector(result.minimizer, num_params_vec)
 end
 
 # end # module QuantumControl
