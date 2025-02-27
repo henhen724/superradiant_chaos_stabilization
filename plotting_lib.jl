@@ -12,6 +12,7 @@ function plot_wigner(ρ_t::Vector{<:Operator}; args...)
     end
 
     gif(anim, "wigner_animation.gif", fps=10)
+    return anim
 end
 
 function plot_wigner(ρ::Operator; c=:viridis, xlabel="x", ylabel="p", title="Wigner Function", kwargs...)

@@ -67,57 +67,38 @@ function draw_circuit_element(element, x_position, param_str=nothing)
         plot!(rect, fillcolor=:blue, label="", seriestype=:shape, linejoin=:round)
         annotate!(x_position, 1.2, text(element.name, :center, 10, :white))
         if param_str !== nothing
-            annotate!(x_position, 0.8, text("($param_str)", :center, 8, :white))
+            annotate!(x_position, 0.8, text("($param_str)", :center, 6, :white))
         end
     elseif element isa Measurement
         rect = Shape([x_position - 0.4, x_position - 0.4, x_position + 0.4, x_position + 0.4], [0.5, 1.5, 1.5, 0.5])
         plot!(rect, fillcolor=:green, label="", seriestype=:shape, linejoin=:round)
         annotate!(x_position, 1.2, text(element.name, :center, 10, :white))
         if param_str !== nothing
-            annotate!(x_position, 0.8, text("($param_str)", :center, 8, :white))
+            annotate!(x_position, 0.8, text("($param_str)", :center, 6, :white))
         end
     else
         error("Unknown element type in quantum circuit")
     end
 end
 
-function draw_circuit(circuit::QuantumCircuit; params::Union{Nothing,Vector{Vector{<:Real}}}=nothing)
+function draw_circuit(circuit::QuantumCircuit; params::Union{Nothing,Any}=nothing, fig=nothing)
     num_elements = length(circuit.elements)
     x_positions = 1:num_elements
-    plot(legend=false, xlim=(0, num_elements + 1), ylim=(0, 2), aspect_ratio=:equal, framestyle=:none)
-
-    if isa(params, Nothing)
-        for (i, element) in enumerate(circuit.elements)
-            if element isa Gate
-                rect = Shape([x_positions[i] - 0.4, x_positions[i] - 0.4, x_positions[i] + 0.4, x_positions[i] + 0.4], [0.5, 1.5, 1.5, 0.5])
-                plot!(rect, fillcolor=:blue, label="", seriestype=:shape, linejoin=:round)
-                annotate!(x_positions[i], 1, text(element.name, :center, 10, :white))
-            elseif element isa Measurement
-                rect = Shape([x_positions[i] - 0.4, x_positions[i] - 0.4, x_positions[i] + 0.4, x_positions[i] + 0.4], [0.5, 1.5, 1.5, 0.5])
-                plot!(rect, fillcolor=:green, label="", seriestype=:shape, linejoin=:round)
-                annotate!(x_positions[i], 1, text(element.name, :center, 10, :white))
-            end
-            if i > 1
-                plot!([x_positions[i-1] + 0.4, x_positions[i] - 0.4], [1, 1], color=:black, linewidth=2)
-            end
-        end
+    if fig === nothing
+        fig = plot(legend=false, xlim=(0, num_elements + 1), ylim=(0, 2), aspect_ratio=:equal, framestyle=:none)
     else
-        for (i, element) in enumerate(circuit.elements)
+        plot!(fig, legend=false, xlim=(0, num_elements + 1), ylim=(0, 2), aspect_ratio=:equal, framestyle=:none)
+    end
+
+    for (i, element) in enumerate(circuit.elements)
+        if isa(params, Nothing)
+            draw_circuit_element(element, x_positions[i])
+        else
             param_str = join(round.(params[i], digits=1), ", ")
-            if element isa Gate
-                rect = Shape([x_positions[i] - 0.4, x_positions[i] - 0.4, x_positions[i] + 0.4, x_positions[i] + 0.4], [0.5, 1.5, 1.5, 0.5])
-                plot!(rect, fillcolor=:blue, label="", seriestype=:shape, linejoin=:round)
-                annotate!(x_positions[i], 1.2, text(element.name, :center, 10, :white))
-                annotate!(x_positions[i], 0.8, text("($param_str)", :center, 8, :white))
-            elseif element isa Measurement
-                rect = Shape([x_positions[i] - 0.4, x_positions[i] - 0.4, x_positions[i] + 0.4, x_positions[i] + 0.4], [0.5, 1.5, 1.5, 0.5])
-                plot!(rect, fillcolor=:green, label="", seriestype=:shape, linejoin=:round)
-                annotate!(x_positions[i], 1.2, text(element.name, :center, 10, :white))
-                annotate!(x_positions[i], 0.8, text("($param_str)", :center, 8, :white))
-            end
-            if i > 1
-                plot!([x_positions[i-1] + 0.4, x_positions[i] - 0.4], [1, 1], color=:black, linewidth=2)
-            end
+            draw_circuit_element(element, x_positions[i], param_str)
+        end
+        if i > 1
+            plot!([x_positions[i-1] + 0.4, x_positions[i] - 0.4], [1, 1], color=:black, linewidth=2)
         end
     end
 
@@ -127,7 +108,7 @@ function draw_circuit(circuit::QuantumCircuit; params::Union{Nothing,Vector{Vect
     plot!(arrow_x, arrow_y, arrow=:arrow, color=:black, linewidth=2)
     annotate!((num_elements + 0.5) / 2, 0.1, text("Time", :center, 10, :black))
 
-    return plot!()
+    return fig
 end
 
 
@@ -161,6 +142,7 @@ function co_evolve(ρ_t, measurement_record, cost::Cost, circuit::QuantumCircuit
         if element isa Gate
             gate = element.func(param)
             σ_t[i] = dagger(gate) * σ_t[i+1] * gate
+            # println("The costate norm", norm(σ_t[i]))
         elseif element isa Measurement
             Kraus_ops = element.func(params)
             println("TODO measurement costate not yet added")
@@ -193,7 +175,13 @@ function calculate_param_gradients(grad, ρ_t, σ_t, cost::Cost, circuit::Quantu
                 gate = element.func(param)
                 dgate = element.dfunc_dparam(param)
                 for j in eachindex(dgate)
+                    # if any(abs.(dgate[j].data) .> 1e6)
+                    #     println("Matrix elements greater than 1e6 found")
+                    #     println(element.name)
+                    #     println(param)
+                    # end
                     grad[i][j] = 2 * real.(tr(dagger(σ_t[i+1]) * gate * ρ_t[i] * dagger(dgate[j])) + tr(dagger(σ_t[i+1]) * dgate[j] * ρ_t[i] * dagger(gate)))
+                    # println(grad[i][j])
                 end
             end
         elseif element isa Measurement
@@ -211,7 +199,7 @@ function calculate_param_gradients(grad, ρ_t, σ_t, cost::Cost, circuit::Quantu
         else
             error("Unknown element type in quantum circuit")
         end
-        grad[i] += cost.d_integrated_cost_dparams(param, ρ_t[i])
+        # grad[i] += cost.d_integrated_cost_dparams(param, ρ_t[i])
     end
 end
 
@@ -223,6 +211,10 @@ function reshape_to_params_vector(flat_params, num_params_vec)
         num_of_params_so_far += num_params
     end
     return params
+end
+
+function clip_val(val, min_v, max_v)
+    return min(max(val, min_v), max_v)
 end
 
 function GRAPE(ρ_0, circuit::QuantumCircuit, cost::Cost; seed=nothing)
@@ -243,7 +235,8 @@ function GRAPE(ρ_0, circuit::QuantumCircuit, cost::Cost; seed=nothing)
         σ_t = co_evolve(ρ_t, measurement_record, cost, circuit, params)
         grad = [zeros(Float64, ele.num_params) for ele in circuit.elements]
         calculate_param_gradients(grad, ρ_t, σ_t, cost, circuit, params)
-        G .= vcat(grad...)
+        # println("this should be the grad norm", sqrt(sum(norm(vec)^2 for vec in grad)))
+        G .= vcat(grad...)#map(x -> clip_val(x, -10.0, 10.0), vcat(grad...))
     end
 
     x0 = vcat(inital_params...)
