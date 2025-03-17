@@ -5,10 +5,17 @@ import QuantumOptics: Operator
 struct Gate
     func::Function #Vector{<:Number} -> Operator
     dfunc_dparam::Union{Function,Nothing} #Vector{<:Number} -> Vector{Operator}
+    d2func_dparam2::Union{Function,Nothing} #Vector{<:Number} -> Matrix{Operator}
     num_params::Int
     name::Union{String,Nothing}
 end
 
+function Gate(H::Any; name=nothing)
+    func = param -> exp(-im * param[1] * H)
+    dfunc_dparam = param -> [-im * H * exp(-im * param[1] * H)]
+    d2func_dparam2 = param -> [-H^2 * exp(-im * param[1] * H)]
+    return Gate(func, dfunc_dparam, d2func_dparam2, 1, name)
+end
 
 struct Measurement
     func::Function #Vector{<:Number} -> Vector{Tuple{Operator,<:Number}}
@@ -181,6 +188,10 @@ function calculate_param_gradients(grad, ρ_t, σ_t, cost::Cost, circuit::Quantu
                     #     println(param)
                     # end
                     grad[i][j] = 2 * real.(tr(dagger(σ_t[i+1]) * gate * ρ_t[i] * dagger(dgate[j])) + tr(dagger(σ_t[i+1]) * dgate[j] * ρ_t[i] * dagger(gate)))
+                    if isnan(grad[i][j])
+                        print("Found NaN $i $j")
+                        grad[i][j] = 0.0
+                    end
                     # println(grad[i][j])
                 end
             end
@@ -235,6 +246,15 @@ function GRAPE(ρ_0, circuit::QuantumCircuit, cost::Cost; seed=nothing)
         σ_t = co_evolve(ρ_t, measurement_record, cost, circuit, params)
         grad = [zeros(Float64, ele.num_params) for ele in circuit.elements]
         calculate_param_gradients(grad, ρ_t, σ_t, cost, circuit, params)
+        for (i, grad_vec) in enumerate(grad)
+            if any(isnan.(grad_vec))
+                println("NaN detected in gradient vector at index $i")
+                println("Gradient vector: ", grad_vec)
+                println("Parameters: ", params[i])
+                println("Density matrix at time step: ", ρ_t[i])
+                println("Costate at time step: ", σ_t[i])
+            end
+        end
         # println("this should be the grad norm", sqrt(sum(norm(vec)^2 for vec in grad)))
         G .= vcat(grad...)#map(x -> clip_val(x, -10.0, 10.0), vcat(grad...))
     end
