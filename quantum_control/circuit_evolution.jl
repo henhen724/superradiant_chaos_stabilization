@@ -1,4 +1,5 @@
 # module QuantumControl
+using KernelAbstractions
 
 import QuantumOptics: Operator
 
@@ -171,47 +172,42 @@ function co_evolve(ρ_t, measurement_record, cost::Cost, circuit::QuantumCircuit
     return σ_t
 end
 
-function calculate_param_gradients(grad, ρ_t, σ_t, cost::Cost, circuit::QuantumCircuit, params::Vector{Vector{Float64}}; averaged=false)
-    for (i, element) in enumerate(circuit.elements)
-        param = params[i]
-        if element isa Gate
-            if isa(element.dfunc_dparam, Nothing)
-                error("Unimplimented") # TODO
-            # grad[i] .= FiniteDiff.finite_difference_gradient(param -> 1 - real(tr(dagger(σ_t[i+1]) * element.func(param) * ρ_t[i] * dagger(element.func(param)))))
-            else
-                gate = element.func(param)
-                dgate = element.dfunc_dparam(param)
-                for j in eachindex(dgate)
-                    # if any(abs.(dgate[j].data) .> 1e6)
-                    #     println("Matrix elements greater than 1e6 found")
-                    #     println(element.name)
-                    #     println(param)
-                    # end
-                    grad[i][j] = 2 * real.(tr(dagger(σ_t[i+1]) * gate * ρ_t[i] * dagger(dgate[j])) + tr(dagger(σ_t[i+1]) * dgate[j] * ρ_t[i] * dagger(gate)))
-                    if isnan(grad[i][j])
-                        print("Found NaN $i $j")
-                        grad[i][j] = 0.0
-                    end
-                    # println(grad[i][j])
-                end
-            end
-        elseif element isa Measurement
-            error("Unimplimented TODO") # TODO
-        # Kraus_ops = element.func(param)
-        # dKraus_ops = element.dfunc_dparam
-        # if averaged
-        #     for (op, label) in Kraus_ops
-        #         grad[i] .= grad[i] .+ 2 * real.(tr(dagger(op) * σ_t[i+1] * op * ρ_t[i] - σ_t[i+1] * op * ρ_t[i] * dagger(op)))
-        #     end
-        # else
-        #     selected_op, label = Kraus_ops[measurement_record[i][2]]
-        #     grad[i] .= 2 * real.(tr(dagger(selected_op) * σ_t[i+1] * selected_op * ρ_t[i] - σ_t[i+1] * selected_op * ρ_t[i] * dagger(selected_op)))
-        # end
+# Kernel function to compute gradients for a single element
+@kernel function compute_gradient_kernel(grad, @Const(ρ_t), @Const(σ_t), cost, circuit_elements, params)
+    i = @index(Global)
+    element = circuit_elements[i]
+    param = params[i]
+    if element isa Gate
+        if isa(element.dfunc_dparam, Nothing)
+            # Handle unimplemented case
+            grad[i] .= 0.0 # Placeholder for unimplemented case
         else
-            error("Unknown element type in quantum circuit")
+            gate = element.func(param)
+            dgate = element.dfunc_dparam(param)
+            for j in eachindex(dgate)
+                grad[i][j] = 2 * real(
+                    tr(dagger(σ_t[i+1]) * gate * ρ_t[i] * dagger(dgate[j])) +
+                    tr(dagger(σ_t[i+1]) * dgate[j] * ρ_t[i] * dagger(gate))
+                )
+            end
         end
-        # grad[i] += cost.d_integrated_cost_dparams(param, ρ_t[i])
+    elseif element isa Measurement
+        # Handle unimplemented Measurement case
+        grad[i] .= 0.0 # Placeholder for unimplemented case
+    else
+        # Handle unknown element type
+        grad[i] .= 0.0 # Placeholder for unknown element type
     end
+end
+
+function calculate_param_gradients(grad, ρ_t, σ_t, cost::Cost, circuit::QuantumCircuit, params::Vector{Vector{Float64}}; backend=CPU(), averaged=false)
+    # Prepare data for the kernel
+    circuit_elements = circuit.elements
+    num_elements = length(circuit_elements)
+
+    # Launch the kernel
+    compute_gradient_kernel(backend, 20)(grad, ρ_t, σ_t, cost, circuit_elements, params, ndrange=size(circuit_elements))
+    synchronize(backend)
 end
 
 function reshape_to_params_vector(flat_params, num_params_vec)
@@ -245,22 +241,12 @@ function GRAPE(ρ_0, circuit::QuantumCircuit, cost::Cost; seed=nothing)
         ρ_t, _ = measurement_record = evolve(ρ_0, circuit, params)
         σ_t = co_evolve(ρ_t, measurement_record, cost, circuit, params)
         grad = [zeros(Float64, ele.num_params) for ele in circuit.elements]
-        calculate_param_gradients(grad, ρ_t, σ_t, cost, circuit, params)
-        for (i, grad_vec) in enumerate(grad)
-            if any(isnan.(grad_vec))
-                println("NaN detected in gradient vector at index $i")
-                println("Gradient vector: ", grad_vec)
-                println("Parameters: ", params[i])
-                println("Density matrix at time step: ", ρ_t[i])
-                println("Costate at time step: ", σ_t[i])
-            end
-        end
-        # println("this should be the grad norm", sqrt(sum(norm(vec)^2 for vec in grad)))
+        calculate_param_gradients(grad, ρ_t, σ_t, cost, circuit, params; backend=CPU())
         G .= vcat(grad...)#map(x -> clip_val(x, -10.0, 10.0), vcat(grad...))
     end
 
     x0 = vcat(inital_params...)
-    result = optimize(objective, gradient!, x0, LBFGS(), Optim.Options(g_tol=1e-5, show_trace=true, store_trace=true, iterations=1000))
+    result = optimize(objective, gradient!, x0, LBFGS(; m=20), Optim.Options(g_tol=1e-7, show_trace=true, store_trace=true, iterations=1000))
 
     return reshape_to_params_vector(result.minimizer, num_params_vec), result
 end

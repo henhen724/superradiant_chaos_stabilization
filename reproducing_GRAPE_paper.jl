@@ -39,7 +39,7 @@ params, result = GRAPE(dm(init_state), UnitCircuit, fidelity_3)
 # Set the resolution of the figure to 300 dpi
 default(dpi=300)
 draw_circuit(UnitCircuit; params=params)
-savefig("circuit_diagram.png")
+# savefig("circuit_diagram.png")
 
 # Calculate the evolution of the initial state using the optimized parameters
 ρ_t, _ = evolve(dm(init_state), UnitCircuit, params)
@@ -69,27 +69,30 @@ fidelity_cat = Cost((params, ρ) -> 0, ρ -> 1 - real(tr(dagger(dm(targ_state)) 
 # Prepare the cat state with circuits of length 1 to 50
 UnitCircuit = QuantumCircuit(repeat([U_q, U_qc], outer=20))
 params, result = GRAPE(dm(init_state), UnitCircuit, fidelity_cat)
+results = [result]
 
-# Plot the infidelity over time for the different circuit realizations
-infidelities = [map(x -> x.value, result.trace) for result in results]
+ρ_t, _ = evolve(dm(init_state), UnitCircuit, params)
 
-p = plot()
-for (i, infidelity) in enumerate(infidelities)
-    plot!(p, 1:length(infidelity), infidelity, color=RGB(i / length(infidelities), 0, 1 - i / length(infidelities)), label=false)
-end
+ρ_t_boson = [ptrace(ρ, 2) for ρ in ρ_t]
+ρ_t_spin = [ptrace(ρ, 1) for ρ in ρ_t]
+
+# Plot the photon number distribution for the final state produced
+photon_distribution = [real(expect(dm(fockstate(b_fock, i)), ρ_t_boson[end])) for i in 1:Nfock]
+
+bar(0:(Nfock-1), photon_distribution, xlabel="Photon Number", ylabel="Probability", label="Photon Distribution", legend=:topright)
+savefig("photon_number_distribution.png")
+
+iterations = 1:length(result.trace)
+g_norms = map(x -> x.g_norm, result.trace)
+values = map(x -> x.value, result.trace)
+plot(iterations, values, label="Value")
 xlabel!("Iteration")
 ylabel!("Infidelity")
-
-colormap = [RGB(a, 0, 1 - a) for a in range(0, stop=1, length=100)]
-
-# Add a color bar
-using CairoMakie
-fig = Figure()
-Axis(fig[1, 1])
-Colorbar(fig[1, 2], limits=(0, 50), colormap=colormap,
-    flipaxis=false)
-fig
-
+savefig("infidelity_plot.png")
+plot(iterations, g_norms, label="g_norm", xlabel="Iteration", ylabel="Value", legend=:topright)
+xlabel!("Iteration")
+ylabel!("Gradient Norm")
+savefig("gradient_plot.png")
 
 ρ_t, _ = evolve(dm(init_state), UnitCircuit, params)
 
@@ -97,10 +100,4 @@ fig
 ρ_t_spin = [ptrace(ρ, 1) for ρ in ρ_t]
 
 plot_wigner(ρ_t_boson[end])
-
-iterations = 1:length(result.trace)
-g_norms = map(x -> x.g_norm, result.trace)
-values = map(x -> x.value, result.trace)
-
-plot(iterations, g_norms, label="g_norm", xlabel="Iteration", ylabel="Value", legend=:topright)
-plot(iterations, values, label="Value")
+savefig("wigner_function_plot.png")
