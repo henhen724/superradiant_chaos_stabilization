@@ -224,7 +224,7 @@ function clip_val(val, min_v, max_v)
     return min(max(val, min_v), max_v)
 end
 
-function GRAPE(ρ_0, circuit::QuantumCircuit, cost::Cost; seed=nothing)
+function GRAPE(ρ_0, circuit::QuantumCircuit, cost::Cost; seed=nothing, optim_alg=LBFGS(; m=20), optim_options=Optim.Options(g_tol=1e-7, show_trace=true, store_trace=true, iterations=1000))
     Random.seed!(seed)
     inital_params = [2 * π * randn(Float64, ele.num_params) for ele in circuit.elements]
     num_params_vec = [ele.num_params for ele in circuit.elements]
@@ -246,7 +246,7 @@ function GRAPE(ρ_0, circuit::QuantumCircuit, cost::Cost; seed=nothing)
     end
 
     x0 = vcat(inital_params...)
-    result = optimize(objective, gradient!, x0, LBFGS(; m=20), Optim.Options(g_tol=1e-7, show_trace=true, store_trace=true, iterations=1000))
+    result = optimize(objective, gradient!, x0, optim_alg, optim_options)
 
     return reshape_to_params_vector(result.minimizer, num_params_vec), result
 end

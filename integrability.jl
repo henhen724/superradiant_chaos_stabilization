@@ -1,6 +1,3 @@
-using Pkg
-Pkg.add("SymPy")
-
 using SymPy
 
 # Define symbolic variables
@@ -37,20 +34,3 @@ function check_invariance(f, g, h)
     return simplify(substituted_eq) == markovs_equation
 end
 
-# Define low degree polynomial morphisms
-@syms u v w
-morphisms = [
-    (u, v, w),
-    (u + 1, v, w),
-    (u, v + 1, w),
-    (u, v, w + 1),
-    (u^2, v, w),
-    (u, v^2, w),
-    (u, v, w^2)
-]
-
-# Check each morphism for invariance
-for (f, g, h) in morphisms
-    is_invariant = check_invariance(f, g, h)
-    println("Morphism (f, g, h) = ($f, $g, $h) keeps Markov's equation invariant: ", is_invariant)
-end
